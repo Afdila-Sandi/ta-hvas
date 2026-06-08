@@ -33,7 +33,7 @@ services:
   #database
   postgres-auth:
     image: postgres:15-alpine
-    container_name: hvas-postgres-auth
+    container_name: hvas-db_auth
     restart: always
     env_file:
       - ./auth-service/.env
@@ -45,7 +45,7 @@ services:
   
   postgres-monitor:
     image: postgres:15-alpine
-    container_name: hvas-postgres-monitor
+    container_name: hvas-db_monitor
     restart: always
     env_file:
       - ./monitoring-service/.env
