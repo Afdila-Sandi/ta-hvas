@@ -1,0 +1,107 @@
+networks:
+  hvas-net:
+    driver: bridge
+
+services:
+  #web server nginx
+  nginx-vue:
+    image: nginx:alpine
+    container_name: hvas-nginx
+    restart: always
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ../frontend:/usr/share/nginx/html:ro 
+    networks:
+      - hvas-net
+
+  #mqtt
+  mosquitto:
+    image: eclipse-mosquitto:1.6.15
+    container_name: hvas-mqtt
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./certs:/mosquitto/config/certs:ro
+    networks:
+      - hvas-net
+
+  #database
+  postgres-auth:
+    image: postgres:15-alpine
+    container_name: hvas-postgres-auth
+    restart: always
+    env_file:
+      - ./auth-service/.env
+    volumes:
+      - pgdata_auth:/var/lib/postgresql/data
+      - ./auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - hvas-net
+  
+  postgres-monitor:
+    image: postgres:15-alpine
+    container_name: hvas-postgres-monitor
+    restart: always
+    env_file:
+      - ./monitoring-service/.env
+    volumes:
+      - pgdata_monitor:/var/lib/postgresql/data
+      - ./monitoring-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - hvas-net
+
+  auth-service:
+    build: ./auth-service
+    container_name: hvas-auth
+    restart: always
+    env_file:
+      - ./auth-service/.env
+    depends_on:
+      - postgres-auth
+    networks:
+      - hvas-net
+
+  monitoring-service:
+    build: ./monitoring-service
+    container_name: hvas-monitor
+    restart: always
+    env_file:
+      - ./monitoring-service/.env
+    depends_on:
+      - postgres-monitor
+      - mosquitto
+    networks:
+      - hvas-net
+
+  control-service:
+    build: ./control-service
+    container_name: hvas-control
+    restart: always
+    env_file:
+      - ./control-service/.env
+    depends_on:
+      - mosquitto
+    networks:
+      - hvas-net
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: hvas-api-gateway
+    restart: always
+    expose:
+      - "5000" 
+    depends_on:
+      - auth-service
+      - monitoring-service
+      - control-service
+    networks:
+      - hvas-net
+
+volumes:
+  pgdata_auth:
+  pgdata_monitor:
