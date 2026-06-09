@@ -11,7 +11,7 @@
           </p>
         </div>
         <button
-          @click="router.push('/dashboard')"
+          @click="router.push('/teknisi')"
           class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg transition-colors"
         >
           &larr; Kembali ke Dashboard
@@ -89,7 +89,7 @@ const renderGrafik = (dataRows) => {
         {
           label: "Suhu BME280 (°C)",
           data: suhuBME,
-          borderColor: "#3b82f6", 
+          borderColor: "#3b82f6",
           backgroundColor: "rgba(59, 130, 246, 0.1)",
           tension: 0.4,
           fill: true,
@@ -97,7 +97,7 @@ const renderGrafik = (dataRows) => {
         {
           label: "Suhu DHT22 (°C)",
           data: suhuDHT,
-          borderColor: "#10b981", 
+          borderColor: "#10b981",
           backgroundColor: "rgba(16, 185, 129, 0.1)",
           tension: 0.4,
           fill: true,

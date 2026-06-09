@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
-import Register from "../views/Register.vue";
-import Dashboard from "../views/Dashboard.vue";
-import Riwayat from "../views/Riwayat.vue"; 
+import Riwayat from "../views/Riwayat.vue";
+
+// Perbaikan Import: Pastikan nama import sama dengan nama komponen yang dipanggil di routes
+import TeknisiDashboard from "../views/TeknisiDashboard.vue";
+import AdminDashboard from "../views/AdminDashboard.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,14 +19,16 @@ const router = createRouter({
       component: Login,
     },
     {
-      path: "/register",
-      name: "Register",
-      component: Register,
+      path: "/admin",
+      name: "AdminDashboard",
+      component: AdminDashboard,
+      meta: { requiresAuth: true, role: "admin" },
     },
     {
-      path: "/dashboard",
-      name: "Dashboard",
-      component: Dashboard,
+      path: "/teknisi",
+      name: "TeknisiDashboard",
+      component: TeknisiDashboard,
+      meta: { requiresAuth: true, role: "teknisi" },
     },
     {
       path: "/riwayat",
@@ -34,16 +38,16 @@ const router = createRouter({
   ],
 });
 
-//tes tanpa token jwt
-//router.beforeEach((to, from, next) => {
-//const publicPages = ["/login", "/register"];
-//const authRequired = !publicPages.includes(to.path);
-//const loggedIn = localStorage.getItem("hvas_jwt_token");
+// Tes tanpa token jwt (Dibiarkan di-comment sesuai kode Anda)
+// router.beforeEach((to, from, next) => {
+//   const publicPages = ["/login", "/register"];
+//   const authRequired = !publicPages.includes(to.path);
+//   const loggedIn = localStorage.getItem("hvas_jwt_token");
 
-// if (authRequired && !loggedIn) {
-// return next("/login");
-//}
-//next();
-//});
+//   if (authRequired && !loggedIn) {
+//     return next("/login");
+//   }
+//   next();
+// });
 
 export default router;

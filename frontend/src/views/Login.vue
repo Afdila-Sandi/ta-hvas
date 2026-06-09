@@ -10,37 +10,37 @@
           class="h-16 mx-auto mb-4 object-contain"
           @error="$event.target.style.display = 'none'"
         />
-        <h1 class="text-2xl font-bold text-slate-800">Monitoring HVAS</h1>
+        <h1 class="text-2xl font-bold text-slate-800">AirLab Control</h1>
         <p class="text-sm text-slate-500 mt-1">
-          Sistem Kendali & Monitoring IoT
+          Sistem Monitoring & Kontrol HVAS
         </p>
       </div>
 
       <div
         v-if="errorMessage"
-        class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center"
+        class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center font-medium"
       >
         {{ errorMessage }}
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-5">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1"
-            >Nama Pengguna</label
-          >
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Username
+          </label>
           <input
             v-model="form.username"
             type="text"
             required
-            placeholder="Masukkan ID Teknisi"
+            placeholder="masukkan username anda"
             class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1"
-            >Kata Sandi</label
-          >
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Kata Sandi
+          </label>
           <input
             v-model="form.password"
             type="password"
@@ -53,9 +53,9 @@
         <button
           type="submit"
           :disabled="isLoading"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex justify-center items-center disabled:bg-blue-400 disabled:cursor-not-allowed"
+          class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex justify-center items-center disabled:bg-emerald-400 disabled:cursor-not-allowed"
         >
-          <span v-if="!isLoading">Masuk ke Sistem</span>
+          <span v-if="!isLoading">Masuk</span>
           <span v-else class="flex items-center gap-2">
             <svg
               class="animate-spin h-5 w-5 text-white"
@@ -81,14 +81,6 @@
           </span>
         </button>
       </form>
-      <div class="mt-6 text-center text-sm text-slate-500">
-        Belum punya akun?
-        <router-link
-          to="/register"
-          class="text-blue-600 hover:underline font-semibold"
-          >Silahkan Register</router-link
-        >
-      </div>
     </div>
   </div>
 </template>
@@ -115,9 +107,24 @@ const handleLogin = async () => {
   const result = await authStore.login(form.username, form.password);
 
   if (result.success) {
-    router.push("/dashboard");
+    // 1. Ambil role dari localStorage (atau dari state Pinia authStore Anda)
+    // Pastikan backend Anda mengirimkan role saat login berhasil
+    const userRole = localStorage.getItem("role") || authStore.userRole;
+
+    // 2. Redirect berdasarkan Role
+    if (userRole === "admin") {
+      router.push("/admin");
+    } else if (userRole === "teknisi") {
+      router.push("/teknisi");
+    } else {
+      // Fallback jika role tidak terbaca, arahkan ke teknisi sebagai default aman
+      router.push("/teknisi");
+    }
   } else {
-    errorMessage.value = result.message;
+    // Tampilkan pesan error dari backend
+    errorMessage.value =
+      result.message ||
+      "Gagal masuk. Periksa kembali username dan kata sandi Anda.";
   }
 
   isLoading.value = false;

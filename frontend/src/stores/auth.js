@@ -1,25 +1,37 @@
 import { defineStore } from "pinia";
-import api from "../services/api"; 
+import api from "../services/api";
+
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     token: localStorage.getItem("hvas_jwt_token") || null,
+    userRole: localStorage.getItem("role") || null, // Tambahan: Baca role dari localStorage
     user: null,
   }),
 
   getters: {
     isAuthenticated: (state) => !!state.token,
+    isAdmin: (state) => state.userRole === "admin", // Tambahan opsional: Cek apakah admin
+    isTeknisi: (state) => state.userRole === "teknisi", // Tambahan opsional: Cek apakah teknisi
   },
 
   actions: {
     async login(username, password) {
       try {
         const response = await api.post("/auth/login", { username, password });
+
+        // Tangkap token dan role dari respon backend
         const token = response.data.token;
+        const role = response.data.role;
 
+        // 1. Simpan ke state Pinia
         this.token = token;
-        localStorage.setItem("hvas_jwt_token", token);
+        this.userRole = role;
 
-        return { success: true, role: response.data.role };
+        // 2. Simpan ke localStorage agar tidak hilang saat browser di-refresh
+        localStorage.setItem("hvas_jwt_token", token);
+        localStorage.setItem("role", role);
+
+        return { success: true, role: role };
       } catch (error) {
         return {
           success: false,
@@ -47,9 +59,14 @@ export const useAuthStore = defineStore("auth", {
     },
 
     logout() {
+      // 1. Bersihkan state Pinia
       this.token = null;
+      this.userRole = null;
       this.user = null;
+
+      // 2. Bersihkan localStorage
       localStorage.removeItem("hvas_jwt_token");
+      localStorage.removeItem("role"); // Tambahan: Hapus role saat logout
     },
   },
 });
