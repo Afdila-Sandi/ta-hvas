@@ -61,7 +61,7 @@
               Motor HVAS
             </h2>
             <div
-              class="px-3 py-1 rounded-full text-xs font-bold tracking-widest"
+              class="px-3 py-1 rounded-full text-xs font-bold tracking-widest transition-colors duration-300"
               :class="
                 sensorData.status_pompa === 'ON'
                   ? 'bg-emerald-100 text-emerald-600'
@@ -93,7 +93,7 @@
               "
               class="flex-1 py-2 text-sm rounded-xl transition-all"
             >
-              Siklus
+              Siklus Waktu
             </button>
           </div>
 
@@ -131,41 +131,103 @@
           </div>
 
           <div v-else class="space-y-4">
-            <div class="flex gap-3">
-              <input
-                type="number"
-                v-model="inputDurasiOn"
-                placeholder="ON (Menit)"
-                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-emerald-500 text-center"
-              />
-              <input
-                type="number"
-                v-model="inputDurasiOff"
-                placeholder="OFF (Menit)"
-                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-emerald-500 text-center"
-              />
+            <div v-if="!sisaWaktuVisual" class="space-y-4">
+              <div class="flex gap-3">
+                <div class="flex-1">
+                  <label
+                    class="block text-xs font-bold text-slate-400 mb-1 ml-1"
+                    >Lama Hidup (ON)</label
+                  >
+                  <input
+                    type="number"
+                    v-model="inputDurasiOn"
+                    placeholder="Menit"
+                    class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-emerald-500 text-center"
+                  />
+                </div>
+                <div class="flex-1">
+                  <label
+                    class="block text-xs font-bold text-slate-400 mb-1 ml-1"
+                    >Lama Mati (OFF)</label
+                  >
+                  <input
+                    type="number"
+                    v-model="inputDurasiOff"
+                    placeholder="Menit"
+                    class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-slate-800 font-bold outline-none focus:ring-2 focus:ring-emerald-500 text-center"
+                  />
+                </div>
+              </div>
+              <button
+                @click="kirimJadwalSiklus"
+                :disabled="isSending"
+                class="w-full py-3.5 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white font-bold rounded-xl transition-all shadow-md"
+              >
+                Jalankan Siklus Otomatis
+              </button>
             </div>
-            <button
-              @click="kirimJadwalSiklus"
-              :disabled="isSending"
-              class="w-full py-3.5 bg-slate-800 active:bg-slate-900 text-white font-bold rounded-xl transition-all"
-            >
-              Jalankan Siklus
-            </button>
 
             <div
-              v-if="sisaWaktuVisual"
-              class="mt-4 p-4 rounded-xl text-center"
+              v-else
+              class="mt-4 p-6 rounded-2xl border-2 transition-colors duration-500"
               :class="
                 cyclePhase === 'ON'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'bg-orange-50 text-orange-700'
+                  ? 'bg-emerald-50 border-emerald-400'
+                  : 'bg-orange-50 border-orange-400'
               "
             >
-              <p class="text-xs font-bold uppercase mb-1">
-                {{ cyclePhase === "ON" ? "Fase Menyala" : "Fase Istirahat" }}
+              <div class="flex justify-between items-center mb-2">
+                <span
+                  class="text-xs font-black uppercase tracking-wider"
+                  :class="
+                    cyclePhase === 'ON' ? 'text-emerald-600' : 'text-orange-600'
+                  "
+                >
+                  Fase {{ cyclePhase === "ON" ? "Menyala" : "Istirahat" }}
+                </span>
+                <span class="flex h-3 w-3 relative">
+                  <span
+                    class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                    :class="
+                      cyclePhase === 'ON' ? 'bg-emerald-400' : 'bg-orange-400'
+                    "
+                  ></span>
+                  <span
+                    class="relative inline-flex rounded-full h-3 w-3"
+                    :class="
+                      cyclePhase === 'ON' ? 'bg-emerald-500' : 'bg-orange-500'
+                    "
+                  ></span>
+                </span>
+              </div>
+
+              <p
+                class="text-5xl font-black font-mono text-center my-6 tracking-tight"
+                :class="
+                  cyclePhase === 'ON' ? 'text-emerald-700' : 'text-orange-700'
+                "
+              >
+                {{ sisaWaktuVisual }}
               </p>
-              <p class="text-3xl font-black font-mono">{{ sisaWaktuVisual }}</p>
+
+              <p
+                class="text-center text-xs font-medium mb-6"
+                :class="
+                  cyclePhase === 'ON' ? 'text-emerald-600' : 'text-orange-600'
+                "
+              >
+                Menuju fase
+                {{ cyclePhase === "ON" ? "mati (OFF)" : "hidup (ON)" }}
+                selanjutnya...
+              </p>
+
+              <button
+                @click="hentikanSiklus"
+                :disabled="isSending"
+                class="w-full py-3 bg-white text-rose-600 font-bold rounded-xl border border-rose-200 hover:bg-rose-50 active:scale-95 transition-all shadow-sm"
+              >
+                Batalkan & Matikan Pompa
+              </button>
             </div>
           </div>
         </section>
@@ -191,7 +253,6 @@
                 }}<span class="text-sm text-slate-400 font-normal">°C</span>
               </div>
             </div>
-
             <div
               class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col justify-between"
             >
@@ -208,7 +269,6 @@
                 }}<span class="text-sm text-slate-400 font-normal">%</span>
               </div>
             </div>
-
             <div
               class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col justify-between"
             >
@@ -223,7 +283,6 @@
                 }}<span class="text-sm text-slate-400 font-normal">°C</span>
               </div>
             </div>
-
             <div
               class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col justify-between"
             >
@@ -240,7 +299,6 @@
                 }}<span class="text-sm text-slate-400 font-normal">%</span>
               </div>
             </div>
-
             <div
               class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col justify-between"
             >
@@ -257,7 +315,6 @@
                 }}<span class="text-sm text-slate-400 font-normal">hPa</span>
               </div>
             </div>
-
             <div
               class="bg-white p-5 rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] flex flex-col justify-between"
             >
@@ -346,6 +403,16 @@ const kirimPerintah = async (status) => {
   }
 };
 
+// Fungsi baru khusus untuk menghentikan siklus paksa
+const hentikanSiklus = async () => {
+  const konfirmasi = confirm(
+    "Yakin ingin membatalkan siklus dan mematikan pompa?",
+  );
+  if (konfirmasi) {
+    await kirimPerintah("OFF");
+  }
+};
+
 const kirimJadwalSiklus = async () => {
   const dOn = parseInt(inputDurasiOn.value);
   const dOff = parseInt(inputDurasiOff.value);
@@ -362,8 +429,7 @@ const kirimJadwalSiklus = async () => {
       durasi_on: dOn,
       durasi_off: dOff,
     });
-    inputDurasiOn.value = "";
-    inputDurasiOff.value = "";
+    // Jangan reset input jika ingin teknisi ingat angka yang terakhir dimasukkan
   } catch (error) {
     alert(error.response?.data?.message || "Gagal mengaktifkan siklus.");
   } finally {

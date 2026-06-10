@@ -1,9 +1,11 @@
 import { ref } from "vue";
 
+// State Ekspor untuk Komponen Vue
 export const wsStatus = ref("Menghubungkan...");
 export const isConnected = ref(false);
 export const timerEndTime = ref(null);
-export const cyclePhase = ref(null); 
+export const cyclePhase = ref(null);
+
 export const sensorData = ref({
   suhu_bme: 0.0,
   kelembaban_bme: 0.0,
@@ -14,53 +16,126 @@ export const sensorData = ref({
   status_pompa: "MEMUAT...",
 });
 
-let ws;
+let wsMonitor = null;
+let wsControl = null;
 
 export function initWebSocket() {
   const isDev = import.meta.env.DEV;
   const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
   const host = window.location.host;
 
-  const wsURL = isDev
-    ? "wss://34.236.213.248/ws/monitor"
-    : `${protocol}${host}/ws/monitor`;
+  // ==========================================
+  // KONEKSI 1: MONITORING (Data Sensor Udara)
+  // ==========================================
+  function connectMonitor() {
+    const wsMonitorURL = isDev
+      ? "wss://34.236.213.248/ws/monitor"
+      : `${protocol}${host}/ws/monitor`;
 
-  ws = new WebSocket(wsURL);
+    wsMonitor = new WebSocket(wsMonitorURL);
 
-  ws.onopen = () => {
-    wsStatus.value = "Terhubung";
-    isConnected.value = true;
-  };
+    wsMonitor.onopen = () => {
+      wsStatus.value = "Terhubung";
+      isConnected.value = true;
+      console.log("[WS Monitor] Berhasil terhubung.");
+    };
 
-  ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+    wsMonitor.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "realtime_data") {
+          sensorData.value.suhu_bme = data.suhu_bme;
+          sensorData.value.kelembaban_bme = data.kelembaban_bme;
+          sensorData.value.tekanan = data.tekanan;
+          sensorData.value.suhu_dht = data.suhu_dht;
+          sensorData.value.kelembaban_dht = data.kelembaban_dht;
+          sensorData.value.kebisingan = data.kebisingan;
 
-    if (data.type === "realtime_data") {
-      sensorData.value.suhu_bme = data.suhu_bme;
-      sensorData.value.kelembaban_bme = data.kelembaban_bme;
-      sensorData.value.tekanan = data.tekanan;
-      sensorData.value.suhu_dht = data.suhu_dht;
-      sensorData.value.kelembaban_dht = data.kelembaban_dht;
-      sensorData.value.kebisingan = data.kebisingan;
-      if (!timerEndTime.value)
-        sensorData.value.status_pompa = data.status_pompa;
-    } else if (
-      data.type === "status_update" ||
-      data.type === "initial_status"
-    ) {
-      sensorData.value.status_pompa = data.status_pompa;
-      timerEndTime.value = data.timer_end_time;
-      cyclePhase.value = data.cycle_phase; 
-    }
-  };
+          // Cegah status pompa berkedip jika timer sedang berjalan
+          if (!timerEndTime.value) {
+            sensorData.value.status_pompa = data.status_pompa;
+          }
+        }
+      } catch (err) {
+        console.error("[WS Monitor] Gagal membaca data:", err);
+      }
+    };
 
-  ws.onclose = () => {
-    wsStatus.value = "Terputus...";
-    isConnected.value = false;
-    setTimeout(initWebSocket, 2000);
-  };
+    wsMonitor.onclose = () => {
+      wsStatus.value = "Terputus...";
+      isConnected.value = false;
+      console.log("[WS Monitor] Terputus. Mencoba reconnect dalam 3 detik...");
+      setTimeout(connectMonitor, 3000);
+    };
+
+    wsMonitor.onerror = (err) => {
+      console.error("[WS Monitor] Terjadi Error Jaringan.");
+    };
+  }
+
+  // ==========================================
+  // KONEKSI 2: CONTROL (Siklus & Hitung Mundur)
+  // ==========================================
+  function connectControl() {
+    const wsControlURL = isDev
+      ? "wss://34.236.213.248/ws/control"
+      : `${protocol}${host}/ws/control`;
+
+    wsControl = new WebSocket(wsControlURL);
+
+    wsControl.onopen = () => {
+      console.log("[WS Control] Berhasil terhubung.");
+    };
+
+    wsControl.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("[WS Control] Data diterima:", data); // Log ini akan membantu Anda memastikan data waktu benar-benar masuk
+
+        if (data.type === "status_update" || data.type === "initial_status") {
+          sensorData.value.status_pompa = data.status_pompa;
+
+          // Menangkap waktu mundur
+          if (data.timer_end_time) {
+            timerEndTime.value = data.timer_end_time;
+          } else {
+            timerEndTime.value = null; // Bersihkan jika siklus dihentikan
+          }
+
+          // Menangkap fase siklus (ON/OFF)
+          if (data.cycle_phase) {
+            cyclePhase.value = data.cycle_phase;
+          } else {
+            cyclePhase.value = null;
+          }
+        }
+      } catch (err) {
+        console.error("[WS Control] Gagal membaca data:", err);
+      }
+    };
+
+    wsControl.onclose = () => {
+      console.log("[WS Control] Terputus. Mencoba reconnect dalam 3 detik...");
+      setTimeout(connectControl, 3000);
+    };
+
+    wsControl.onerror = (err) => {
+      console.error("[WS Control] Terjadi Error Jaringan.");
+    };
+  }
+
+  // Mulai kedua koneksi secara bersamaan
+  connectMonitor();
+  connectControl();
 }
 
 export function closeWebSocket() {
-  if (ws) ws.close();
+  if (wsMonitor) {
+    wsMonitor.close();
+    wsMonitor = null;
+  }
+  if (wsControl) {
+    wsControl.close();
+    wsControl = null;
+  }
 }

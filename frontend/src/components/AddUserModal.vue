@@ -94,7 +94,7 @@
           <button
             type="submit"
             :disabled="isLoading"
-            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:bg-blue-400"
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:bg-emerald-400"
           >
             <span v-if="!isLoading">Simpan Akun</span>
             <span v-else>Memproses...</span>
