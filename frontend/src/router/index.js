@@ -38,9 +38,9 @@ const router = createRouter({
   ],
 });
 
-// Tes tanpa token jwt (Dibiarkan di-comment sesuai kode Anda)
+// Tes tanpa token jwt
 //router.beforeEach((to, from, next) => {
-//  const publicPages = ["/login", "/register"];
+//  const publicPages = ["/login"];
 //  const authRequired = !publicPages.includes(to.path);
 //  const loggedIn = localStorage.getItem("hvas_jwt_token");
 

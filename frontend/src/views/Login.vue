@@ -4,12 +4,6 @@
       class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 overflow-hidden"
     >
       <div class="text-center mb-8">
-        <img
-          src="../assets/logo-bspji.png"
-          alt="Logo Instansi"
-          class="h-16 mx-auto mb-4 object-contain"
-          @error="$event.target.style.display = 'none'"
-        />
         <h1 class="text-2xl font-bold text-slate-800">AirLab Control</h1>
         <p class="text-sm text-slate-500 mt-1">
           Sistem Monitoring & Kontrol HVAS
