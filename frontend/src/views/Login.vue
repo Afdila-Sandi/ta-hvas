@@ -101,21 +101,17 @@ const handleLogin = async () => {
   const result = await authStore.login(form.username, form.password);
 
   if (result.success) {
-    // 1. Ambil role dari localStorage (atau dari state Pinia authStore Anda)
-    // Pastikan backend Anda mengirimkan role saat login berhasil
+
     const userRole = localStorage.getItem("role") || authStore.userRole;
 
-    // 2. Redirect berdasarkan Role
     if (userRole === "admin") {
       router.push("/admin");
     } else if (userRole === "teknisi") {
       router.push("/teknisi");
     } else {
-      // Fallback jika role tidak terbaca, arahkan ke teknisi sebagai default aman
       router.push("/teknisi");
     }
   } else {
-    // Tampilkan pesan error dari backend
     errorMessage.value =
       result.message ||
       "Gagal masuk. Periksa kembali username dan kata sandi Anda.";

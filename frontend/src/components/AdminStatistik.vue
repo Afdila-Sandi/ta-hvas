@@ -110,13 +110,11 @@
 </template>
 
 <script setup>
-// Menghitung offset lingkaran (352 adalah keliling lingkaran dengan r=56)
+
 const getDashOffset = (tekanan) => {
   const min = 980;
   const max = 1050;
-  // Normalisasi tekanan ke skala 0-1
   const percentage = Math.min(Math.max((tekanan - min) / (max - min), 0), 1);
-  // Menghitung offset: 352 - (persentase * 352)
   return 352 - percentage * 352;
 };
 
@@ -130,10 +128,8 @@ const getTekananColor = (tekanan) => {
 import { ref, onMounted } from "vue";
 import VueApexCharts from "vue3-apexcharts";
 import api from "../services/api";
-// Menggunakan WebSocket dari service yang sama dengan Teknisi
 import { initWebSocket, isConnected, sensorData } from "../services/ws";
 
-// 1. Setup Series Grafik
 const suhuSeries = ref([
   { name: "Suhu Dalam", data: [] },
   { name: "Suhu Luar", data: [] },
@@ -146,7 +142,6 @@ const lembabSeries = ref([
 
 const chartCategories = ref([]);
 
-// 2. Fungsi Menarik Data dari Backend
 const fetchChartData = async () => {
   try {
     const response = await api.get("/monitoring/history");
@@ -174,7 +169,7 @@ const fetchChartData = async () => {
       "Gagal mengambil data grafik historis, menggunakan data dummy:",
       error,
     );
-    // Data Dummy jika API belum siap
+
     chartCategories.value = [
       "08:00",
       "10:00",
@@ -194,7 +189,6 @@ const fetchChartData = async () => {
   }
 };
 
-// 3. Konfigurasi Tampilan Grafik
 const getChartOptions = (colors) => ({
   chart: {
     type: "area",
@@ -223,8 +217,8 @@ const getChartOptions = (colors) => ({
   legend: { position: "top", horizontalAlign: "right" },
 });
 
-const suhuOptions = ref(getChartOptions(["#059669", "#f59e0b"])); // Emerald (Dalam), Amber (Luar)
-const lembabOptions = ref(getChartOptions(["#38bdf8", "#8b5cf6"])); // Sky (Dalam), Violet (Luar)
+const suhuOptions = ref(getChartOptions(["#059669", "#f59e0b"])); 
+const lembabOptions = ref(getChartOptions(["#38bdf8", "#8b5cf6"]));
 
 onMounted(() => {
   initWebSocket();

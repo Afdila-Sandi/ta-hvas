@@ -79,7 +79,7 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import api from "../services/api";
 
-// Import Components
+
 import AdminSidebar from "../components/AdminSidebar.vue";
 import AdminStatistik from "../components/AdminStatistik.vue";
 import AdminLaporan from "../components/AdminLaporan.vue";
@@ -87,7 +87,6 @@ import AddUserModal from "../components/AddUserModal.vue";
 
 const router = useRouter();
 
-// State
 const currentMenu = ref("dashboard");
 const isModalOpen = ref(false);
 
@@ -95,22 +94,18 @@ const adminName = ref("Afdila Sandi");
 const adminRole = ref("Administrator");
 const daftarTeknisi = ref([]);
 
-// Fetch User Profile & Users List
 const fetchData = async () => {
   try {
-    // 1. Ambil Profil Admin yang sedang login
     const profileRes = await api.get("/auth/profile");
     if (profileRes.data) {
       adminName.value = profileRes.data.nama;
       adminRole.value = profileRes.data.peran;
     }
 
-    // 2. Ambil Daftar Teknisi
     const usersRes = await api.get("/users/teknisi");
     daftarTeknisi.value = usersRes.data;
   } catch (error) {
     console.error("Gagal mengambil data dari server:", error);
-    // Data Dummy jika API belum siap
     daftarTeknisi.value = [
       { id: 1, nama: "Budi Santoso", username: "teknisi_budi" },
       { id: 2, nama: "Siti Aminah", username: "teknisi_siti" },
@@ -121,7 +116,7 @@ const fetchData = async () => {
 const handleUserAdded = () => {
   isModalOpen.value = false;
   alert("Akun teknisi baru berhasil ditambahkan!");
-  fetchData(); // Refresh daftar teknisi setelah menambah
+  fetchData(); 
 };
 
 const handleLogout = () => {
@@ -136,7 +131,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Hilangkan scrollbar agar UI terlihat mulus seperti aplikasi asli */
+
 main::-webkit-scrollbar {
   display: none;
 }

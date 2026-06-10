@@ -109,7 +109,6 @@
 import { ref, reactive } from "vue";
 import { useAuthStore } from "../stores/auth";
 
-// Mendefinisikan event agar bisa berkomunikasi dengan Dashboard
 const emit = defineEmits(["close", "success"]);
 
 const authStore = useAuthStore();
@@ -121,7 +120,7 @@ const form = reactive({
   nama: "",
   username: "",
   password: "",
-  peran: "teknisi", // Otomatis diset sebagai teknisi
+  peran: "teknisi", 
 });
 
 const handleRegister = async () => {
@@ -139,15 +138,13 @@ const handleRegister = async () => {
   message.value = result.message;
 
   if (result.success) {
-    // Kosongkan form
     form.nama = "";
     form.username = "";
     form.password = "";
 
-    // Beri tahu Dashboard bahwa pembuatan akun berhasil
     setTimeout(() => {
       emit("success");
-    }, 1500); // Tutup modal otomatis setelah 1.5 detik
+    }, 1500);
   }
 
   isLoading.value = false;

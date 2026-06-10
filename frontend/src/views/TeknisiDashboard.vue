@@ -403,7 +403,6 @@ const kirimPerintah = async (status) => {
   }
 };
 
-// Fungsi baru khusus untuk menghentikan siklus paksa
 const hentikanSiklus = async () => {
   const konfirmasi = confirm(
     "Yakin ingin membatalkan siklus dan mematikan pompa?",
@@ -429,7 +428,6 @@ const kirimJadwalSiklus = async () => {
       durasi_on: dOn,
       durasi_off: dOff,
     });
-    // Jangan reset input jika ingin teknisi ingat angka yang terakhir dimasukkan
   } catch (error) {
     alert(error.response?.data?.message || "Gagal mengaktifkan siklus.");
   } finally {
