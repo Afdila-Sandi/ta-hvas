@@ -17,13 +17,13 @@ app.use(
   }),
 );
 
-//rute monitor
+//rute telemetry
 app.use(
-  "/api/monitor",
+  "/api/telemetry",
   createProxyMiddleware({
-    target: "http://monitoring-service:5002",
+    target: "http://telemetry-service:5002",
     changeOrigin: true,
-    pathRewrite: { "^/api/monitor": "" },
+    pathRewrite: { "^/api/telemetry": "" },
   }),
 );
 
@@ -44,8 +44,8 @@ app.use(
 
 //rute ws
 app.use(
-  "/ws/monitor",
-  createProxyMiddleware({ target: "http://monitoring-service:5002", ws: true }),
+  "/ws/telemetry",
+  createProxyMiddleware({ target: "http://telemetry-service:5002", ws: true }),
 );
 app.use(
   "/ws/control",

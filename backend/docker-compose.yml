@@ -43,15 +43,15 @@ services:
     networks:
       - hvas-net
 
-  postgres-monitor:
+  postgres-telemetry:
     image: postgres:15-alpine
-    container_name: hvas-db_monitor
+    container_name: hvas-db_telemetry
     restart: always
     env_file:
-      - ./monitoring-service/.env
+      - ./telemetry-service/.env
     volumes:
-      - pgdata_monitor:/var/lib/postgresql/data
-      - ./monitoring-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pgdata_telemetry:/var/lib/postgresql/data
+      - ./telemetry-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - hvas-net
 
@@ -67,15 +67,15 @@ services:
     networks:
       - hvas-net
 
-  #monitoring-service
-  monitoring-service:
-    build: ./monitoring-service
-    container_name: hvas-monitor
+  #telemetry-service
+  telemetry-service:
+    build: ./telemetry-service
+    container_name: hvas-telemetry
     restart: always
     env_file:
-      - ./monitoring-service/.env
+      - ./telemetry-service/.env
     depends_on:
-      - postgres-monitor
+      - postgres-telemetry
       - mosquitto
     networks:
       - hvas-net
@@ -101,11 +101,11 @@ services:
       - "5000"
     depends_on:
       - auth-service
-      - monitoring-service
+      - telemetry-service
       - control-service
     networks:
       - hvas-net
 
 volumes:
   pgdata_auth:
-  pgdata_monitor:
+  pgdata_telemetry:

@@ -17,10 +17,10 @@ app.use("/", historyRoutes);
 
 const server = http.createServer(app);
 
-const wss = new WebSocket.Server({ server, path: "/ws/monitor" });
+const wss = new WebSocket.Server({ server, path: "/ws/telemetry" });
 
 initSensorService(wss);
 
 server.listen(PORT, () => {
-  console.log(`Monitoring Service berjalan di port internal ${PORT}`);
+  console.log(`telemetry Service berjalan di port internal ${PORT}`);
 });

@@ -16,7 +16,7 @@ export const sensorData = ref({
   status_pompa: "MEMUAT...",
 });
 
-let wsMonitor = null;
+let wsTelemetry = null;
 let wsControl = null;
 
 export function initWebSocket() {
@@ -24,23 +24,20 @@ export function initWebSocket() {
   const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
   const host = window.location.host;
 
-  // ==========================================
-  // KONEKSI 1: MONITORING (Data Sensor Udara)
-  // ==========================================
-  function connectMonitor() {
-    const wsMonitorURL = isDev
-      ? "wss://34.236.213.248/ws/monitor"
-      : `${protocol}${host}/ws/monitor`;
+  function connectTelemetry() {
+    const wsTelemetryURL = isDev
+      ? "wss://34.236.213.248/ws/telemetry"
+      : `${protocol}${host}/ws/telemetry`;
 
-    wsMonitor = new WebSocket(wsMonitorURL);
+    wsTelemetry = new WebSocket(wsTelemetryURL);
 
-    wsMonitor.onopen = () => {
+    wsTelemetry.onopen = () => {
       wsStatus.value = "Terhubung";
       isConnected.value = true;
-      console.log("[WS Monitor] Berhasil terhubung.");
+      console.log("[WS telemetry] Berhasil terhubung.");
     };
 
-    wsMonitor.onmessage = (event) => {
+    wsTelemetry.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === "realtime_data") {
@@ -57,19 +54,19 @@ export function initWebSocket() {
           }
         }
       } catch (err) {
-        console.error("[WS Monitor] Gagal membaca data:", err);
+        console.error("[WS Telemetry] Gagal membaca data:", err);
       }
     };
 
-    wsMonitor.onclose = () => {
+    wsTelemetry.onclose = () => {
       wsStatus.value = "Terputus...";
       isConnected.value = false;
-      console.log("[WS Monitor] Terputus. Mencoba reconnect dalam 3 detik...");
-      setTimeout(connectMonitor, 3000);
+      console.log("[WS Telemetry] Terputus. Mencoba reconnect dalam 3 detik...");
+      setTimeout(connectTelemetry, 3000);
     };
 
-    wsMonitor.onerror = (err) => {
-      console.error("[WS Monitor] Terjadi Error Jaringan.");
+    wsTelemetry.onerror = (err) => {
+      console.error("[WS Telemetry] Terjadi Error Jaringan.");
     };
   }
 
@@ -125,14 +122,14 @@ export function initWebSocket() {
   }
 
   // Mulai kedua koneksi secara bersamaan
-  connectMonitor();
+  connectTelemetry();
   connectControl();
 }
 
 export function closeWebSocket() {
-  if (wsMonitor) {
-    wsMonitor.close();
-    wsMonitor = null;
+  if (wsTelemetry) {
+    wsTelemetry.close();
+    wsTelemetry = null;
   }
   if (wsControl) {
     wsControl.close();

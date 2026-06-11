@@ -55,7 +55,7 @@ const isLoading = ref(false);
 const ambilDataRiwayat = async () => {
   isLoading.value = true;
   try {
-    const res = await api.get("/monitor/history");
+    const res = await api.get("/telemetry/history");
     if (res.data && res.data.data) {
       renderGrafik(res.data.data.reverse());
     }
