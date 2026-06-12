@@ -332,6 +332,14 @@
           </div>
         </section>
       </main>
+
+      <div class="min-h-screen bg-slate-100 flex justify-center font-sans">
+        <div
+          class="w-full max-w-md bg-slate-50 min-h-screen relative shadow-2xl flex flex-col"
+        >
+          <BottomNav />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -339,6 +347,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import BottomNav from "../components/BottomNav.vue";
 import { useAuthStore } from "../stores/auth";
 import api from "../services/api";
 import {
