@@ -70,9 +70,9 @@ export function initWebSocket() {
     };
   }
 
-  // ==========================================
+
   // KONEKSI 2: CONTROL (Siklus & Hitung Mundur)
-  // ==========================================
+
   function connectControl() {
     const wsControlURL = isDev
       ? "wss://34.236.213.248/ws/control"

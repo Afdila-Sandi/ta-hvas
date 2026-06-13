@@ -144,7 +144,7 @@ const chartCategories = ref([]);
 
 const fetchChartData = async () => {
   try {
-    const response = await api.get("/monitoring/history");
+    const response = await api.get("/telemetry/history");
     const data = response.data;
 
     chartCategories.value = data.map((item) => item.waktu || item.jam);

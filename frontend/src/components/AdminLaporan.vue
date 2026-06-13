@@ -96,7 +96,7 @@ const riwayatAktivitas = ref([]);
 
 const fetchLogs = async () => {
   try {
-    const response = await api.get("/monitoring/logs");
+    const response = await api.get("/telemetry/logs");
     riwayatAktivitas.value = response.data;
   } catch (error) {
     console.error("Gagal mengambil data logs, menggunakan dummy:", error);
