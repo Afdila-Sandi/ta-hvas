@@ -85,7 +85,7 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1"
-            >Username</label
+            >Peran</label
           >
           <input
             v-model="form.peran"
@@ -120,11 +120,10 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import { useAuthStore } from "../stores/auth";
+import api from "../services/api"; // Ganti authStore dengan api langsung
 
 const emit = defineEmits(["close", "success"]);
 
-const authStore = useAuthStore();
 const isLoading = ref(false);
 const message = ref("");
 const isError = ref(false);
@@ -140,27 +139,35 @@ const handleRegister = async () => {
   isLoading.value = true;
   message.value = "";
 
-  const result = await authStore.register(
-    form.username,
-    form.password,
-    form.nama,
-    form.peran,
-  );
+  try {
+    // Tembak API secara langsung tanpa menggunakan Store
+    const response = await api.post("/auth/register", {
+      username: form.username,
+      password: form.password,
+      nama: form.nama,
+      peran: form.peran,
+    });
 
-  isError.value = !result.success;
-  message.value = result.message;
+    isError.value = false;
+    message.value = response.data.message || "Berhasil menambahkan akun!";
 
-  if (result.success) {
+    // Bersihkan form
     form.nama = "";
     form.username = "";
     form.password = "";
     form.peran = "";
 
+    // Beri jeda sedikit agar user bisa membaca pesan sukses, lalu tutup modal
     setTimeout(() => {
       emit("success");
     }, 1500);
+  } catch (error) {
+    isError.value = true;
+    // Tangkap pesan error dari backend jika username sudah ada
+    message.value =
+      error.response?.data?.message || "Gagal menambahkan pengguna.";
+  } finally {
+    isLoading.value = false;
   }
-
-  isLoading.value = false;
 };
 </script>

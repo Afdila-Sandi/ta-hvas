@@ -11,9 +11,14 @@
       </div>
       <button
         @click="fetchLogs"
-        class="bg-emerald-50 border border-emerald-500 text-emerald-700 hover:bg-emerald-100 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
+        :disabled="isLoading"
+        class="bg-emerald-50 border border-emerald-500 text-emerald-700 hover:bg-emerald-100 px-4 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
       >
-        <i class="fa-solid fa-rotate-right mr-1"></i> Perbarui Data
+        <i
+          class="fa-solid fa-rotate-right mr-1"
+          :class="{ 'animate-spin': isLoading }"
+        ></i>
+        {{ isLoading ? "Memuat..." : "Perbarui Data" }}
       </button>
     </header>
 
@@ -50,16 +55,20 @@
             <tr
               v-for="(log, index) in riwayatAktivitas"
               :key="index"
-              class="hover:bg-slate-50/50"
+              class="hover:bg-slate-50/50 transition-colors"
             >
               <td class="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
                 {{ formatWaktu(log.timestamp) }}
               </td>
               <td class="px-6 py-4">
                 <p class="font-bold text-slate-800">{{ log.username }}</p>
-                <p class="text-xs text-slate-400">{{ log.role }}</p>
+                <p class="text-xs text-slate-400 uppercase tracking-wider">
+                  {{ log.role }}
+                </p>
               </td>
-              <td class="px-6 py-4 text-sm text-slate-600">{{ log.action }}</td>
+              <td class="px-6 py-4 text-sm text-slate-600 font-medium">
+                {{ log.action }}
+              </td>
               <td class="px-6 py-4 text-right">
                 <span
                   :class="
@@ -67,18 +76,20 @@
                       ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
                       : 'bg-rose-100 text-rose-700 border-rose-200'
                   "
-                  class="px-3 py-1 text-xs font-bold rounded-lg border"
+                  class="px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest rounded-lg border"
                 >
                   {{ log.status }}
                 </span>
               </td>
             </tr>
+
             <tr v-if="riwayatAktivitas.length === 0">
               <td
                 colspan="4"
-                class="px-6 py-8 text-center text-slate-400 text-sm"
+                class="px-6 py-12 text-center text-slate-400 text-sm font-medium"
               >
-                Belum ada aktivitas tercatat.
+                <span v-if="isLoading">Mengambil data dari server...</span>
+                <span v-else>Belum ada aktivitas tercatat.</span>
               </td>
             </tr>
           </tbody>
@@ -93,34 +104,27 @@ import { ref, onMounted } from "vue";
 import api from "../services/api";
 
 const riwayatAktivitas = ref([]);
+const isLoading = ref(false); // Tambahan state untuk indikator loading
 
 const fetchLogs = async () => {
+  isLoading.value = true;
   try {
     const response = await api.get("/telemetry/logs");
     riwayatAktivitas.value = response.data;
   } catch (error) {
-    console.error("Gagal mengambil data logs, menggunakan dummy:", error);
-    // Dummy Data
-    riwayatAktivitas.value = [
-      {
-        timestamp: new Date(),
-        username: "teknisi_01",
-        role: "teknisi",
-        action: "Mengaktifkan Siklus (180m/60m)",
-        status: "SUCCESS",
-      },
-      {
-        timestamp: new Date(Date.now() - 3600000),
-        username: "teknisi_02",
-        role: "teknisi",
-        action: "Mematikan Pompa (Manual)",
-        status: "SUCCESS",
-      },
-    ];
+    console.error(
+      "Gagal mengambil data riwayat aktivitas:",
+      error.response?.data?.message || error.message,
+    );
+    // Hapus data dummy, cukup pastikan array kosong jika terjadi error
+    riwayatAktivitas.value = [];
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const formatWaktu = (dateString) => {
+  if (!dateString) return "-";
   const date = new Date(dateString);
   return (
     date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) +

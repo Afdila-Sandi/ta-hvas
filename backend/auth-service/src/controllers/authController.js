@@ -109,7 +109,8 @@ exports.register = async (req, res) => {
       success: false,
       message: "Terjadi kesalahan pada peladen saat membuat pengguna",
     });
-
+  }
+};
     // Fungsi untuk mengambil data profil diri sendiri
     exports.getProfile = async (req, res) => {
       try {
@@ -132,10 +133,11 @@ exports.register = async (req, res) => {
           .json({ success: false, message: "Terjadi kesalahan peladen" });
       }
     };
+    
 
     // Fungsi dinamis untuk mengambil daftar pengguna (Bisa difilter)
     exports.getUsers = async (req, res) => {
-      const { role } = req.query; // Menangkap parameter dari URL (misal: ?role=teknisi)
+      const { role } = req.query; 
 
       try {
         let dbQuery =
@@ -158,5 +160,4 @@ exports.register = async (req, res) => {
           .json({ success: false, message: "Terjadi kesalahan pada peladen" });
       }
     };
-  }
-};
+
