@@ -75,7 +75,7 @@ export function initWebSocket() {
 
   function connectControl() {
     const wsControlURL = isDev
-      ? "wss://34.236.213.248/ws/control"
+      ? "wss://98.95.232.165/ws/control"
       : `${protocol}${host}/ws/control`;
 
     wsControl = new WebSocket(wsControlURL);

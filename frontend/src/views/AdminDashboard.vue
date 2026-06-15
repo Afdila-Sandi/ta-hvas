@@ -79,7 +79,6 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import api from "../services/api";
 
-
 import AdminSidebar from "../components/AdminSidebar.vue";
 import AdminStatistik from "../components/AdminStatistik.vue";
 import AdminLaporan from "../components/AdminLaporan.vue";
@@ -96,7 +95,7 @@ const daftarTeknisi = ref([]);
 
 const fetchData = async () => {
   try {
-    const profileRes = await api.get("/auth/profile");
+    const profileRes = await api.get("/auth");
     if (profileRes.data) {
       adminName.value = profileRes.data.nama;
       adminRole.value = profileRes.data.peran;
@@ -116,7 +115,7 @@ const fetchData = async () => {
 const handleUserAdded = () => {
   isModalOpen.value = false;
   alert("Akun teknisi baru berhasil ditambahkan!");
-  fetchData(); 
+  fetchData();
 };
 
 const handleLogout = () => {
@@ -131,7 +130,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
 main::-webkit-scrollbar {
   display: none;
 }
