@@ -95,20 +95,31 @@ const daftarTeknisi = ref([]);
 
 const fetchData = async () => {
   try {
-    const profileRes = await api.get("/auth");
-    if (profileRes.data) {
-      adminName.value = profileRes.data.nama;
-      adminRole.value = profileRes.data.peran;
-    }
+    // 1. Ambil nama profil asli dari database
+    const profileRes = await api.get("/auth/profile");
+    adminName.value = profileRes.data.nama;
 
-    const usersRes = await api.get("/users/teknisi");
+    // Peran sebenarnya masih bisa dibaca dari token jika mau,
+    // tapi karena API profile mengembalikan 'peran', kita pakai dari DB saja agar lebih aman.
+    adminRole.value = profileRes.data.peran;
+
+    // 2. Ambil daftar teknisi
+    const usersRes = await api.get("/auth/users?role=teknisi");
     daftarTeknisi.value = usersRes.data;
   } catch (error) {
-    console.error("Gagal mengambil data dari server:", error);
-    daftarTeknisi.value = [
-      { id: 1, nama: "Budi Santoso", username: "teknisi_budi" },
-      { id: 2, nama: "Siti Aminah", username: "teknisi_siti" },
-    ];
+    console.error(
+      "Gagal mengambil data dari server:",
+      error.response?.data?.message || error.message,
+    );
+
+    // Fallback jika API gagal/error
+    adminName.value = "Admin Tidak Diketahui";
+    daftarTeknisi.value = [];
+
+    // Jika errornya karena token tidak valid (401), paksa logout
+    if (error.response?.status === 401) {
+      handleLogout();
+    }
   }
 };
 

@@ -109,5 +109,54 @@ exports.register = async (req, res) => {
       success: false,
       message: "Terjadi kesalahan pada peladen saat membuat pengguna",
     });
+
+    // Fungsi untuk mengambil data profil diri sendiri
+    exports.getProfile = async (req, res) => {
+      try {
+        // req.user.id didapatkan secara otomatis dari middleware verifyToken
+        const dbQuery =
+          "SELECT id, username, nama, peran FROM users WHERE id = $1";
+        const result = await pool.query(dbQuery, [req.user.id]);
+
+        if (result.rows.length === 0) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Pengguna tidak ditemukan." });
+        }
+
+        return res.status(200).json(result.rows[0]);
+      } catch (error) {
+        console.error("Error mengambil profil:", error.message);
+        return res
+          .status(500)
+          .json({ success: false, message: "Terjadi kesalahan peladen" });
+      }
+    };
+
+    // Fungsi dinamis untuk mengambil daftar pengguna (Bisa difilter)
+    exports.getUsers = async (req, res) => {
+      const { role } = req.query; // Menangkap parameter dari URL (misal: ?role=teknisi)
+
+      try {
+        let dbQuery =
+          "SELECT id, username, nama, peran FROM users ORDER BY nama ASC";
+        let queryParams = [];
+
+        // Jika frontend meminta spesifik role teknisi atau admin
+        if (role) {
+          dbQuery =
+            "SELECT id, username, nama, peran FROM users WHERE peran = $1 ORDER BY nama ASC";
+          queryParams = [role];
+        }
+
+        const result = await pool.query(dbQuery, queryParams);
+        return res.status(200).json(result.rows);
+      } catch (error) {
+        console.error("Error mengambil daftar pengguna:", error.message);
+        return res
+          .status(500)
+          .json({ success: false, message: "Terjadi kesalahan pada peladen" });
+      }
+    };
   }
 };
