@@ -5,7 +5,7 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-console.log("API Gateway V2 (Terbaru) berjalan...");
+console.log("api gateway");
 
 //rute auth
 app.use(

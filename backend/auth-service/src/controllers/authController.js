@@ -161,3 +161,81 @@ exports.register = async (req, res) => {
       }
     };
 
+    // Fungsi untuk memperbarui data pengguna (Update)
+exports.updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { username, nama, peran, password } = req.body;
+
+  // Validasi peran
+  if (peran && !["teknisi", "admin"].includes(peran)) {
+    return res.status(400).json({ success: false, message: "Peran harus 'teknisi' atau 'admin'" });
+  }
+
+  try {
+    // Cek apakah user yang ingin diedit ada
+    const checkUser = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    if (checkUser.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Pengguna tidak ditemukan." });
+    }
+
+    let updateQuery;
+    let queryParams;
+
+    // Jika admin juga mengisi kolom password (ingin mereset password teknisi)
+    if (password && password.trim() !== "") {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      
+      updateQuery = `
+        UPDATE users 
+        SET username = $1, nama = $2, peran = $3, password_hash = $4 
+        WHERE id = $5 RETURNING id, username, nama, peran
+      `;
+      queryParams = [username, nama, peran, hashedPassword, id];
+    } else {
+      // Jika password dibiarkan kosong, jangan ubah passwordnya
+      updateQuery = `
+        UPDATE users 
+        SET username = $1, nama = $2, peran = $3 
+        WHERE id = $4 RETURNING id, username, nama, peran
+      `;
+      queryParams = [username, nama, peran, id];
+    }
+
+    const result = await pool.query(updateQuery, queryParams);
+    return res.status(200).json({
+      success: true,
+      message: "Data pengguna berhasil diperbarui.",
+      user: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error("Error update user:", error.message);
+    return res.status(500).json({ success: false, message: "Terjadi kesalahan pada peladen saat memperbarui pengguna." });
+  }
+};
+
+// Fungsi untuk menghapus pengguna (Delete)
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  // Proteksi ganda: Jangan biarkan admin menghapus dirinya sendiri
+  if (parseInt(id) === req.user.id) {
+    return res.status(403).json({ success: false, message: "Anda tidak dapat menghapus akun Anda sendiri!" });
+  }
+
+  try {
+    const deleteQuery = "DELETE FROM users WHERE id = $1 RETURNING id";
+    const result = await pool.query(deleteQuery, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Pengguna tidak ditemukan." });
+    }
+
+    return res.status(200).json({ success: true, message: "Pengguna berhasil dihapus." });
+  } catch (error) {
+    console.error("Error delete user:", error.message);
+    return res.status(500).json({ success: false, message: "Terjadi kesalahan pada peladen saat menghapus pengguna." });
+  }
+};
+

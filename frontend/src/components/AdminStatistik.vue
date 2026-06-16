@@ -162,7 +162,8 @@ const lembabOptions = ref(getChartOptions(["#38bdf8", "#8b5cf6"]));
 // 4. Fetch Data Historis
 const fetchChartData = async () => {
   try {
-    const response = await api.get("/telemetry/history");
+    // SUDAH DIPERBAIKI MENJADI /logs
+    const response = await api.get("/telemetry/logs");
     const data = response.data;
 
     chartCategories.value = data.map((item) => item.waktu || item.jam);
