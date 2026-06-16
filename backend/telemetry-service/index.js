@@ -4,8 +4,8 @@ const express = require("express");
 const cors = require("cors");
 const WebSocket = require("ws");
 
-const historyRoutes = require("./src/routes/historyRoutes");
-const { initSensorService } = require("./src/services/sensorService");
+const logsRoutes = require("./src/routes/logsRoutes");
+const { initSensorService } = require("./src/services/logsService");
 
 const app = express();
 const PORT = process.env.PORT || 5002;
@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5002;
 app.use(cors());
 app.use(express.json());
 
-app.use("/", historyRoutes);
+app.use("/", logsRoutes);
 
 const server = http.createServer(app);
 

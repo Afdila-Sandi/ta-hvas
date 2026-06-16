@@ -26,7 +26,7 @@ export function initWebSocket() {
 
   function connectTelemetry() {
     const wsTelemetryURL = isDev
-      ? "wss://34.236.213.248/ws/telemetry"
+      ? "wss://98.95.232.165/api/ws/telemetry"
       : `${protocol}${host}/ws/telemetry`;
 
     wsTelemetry = new WebSocket(wsTelemetryURL);
@@ -61,7 +61,9 @@ export function initWebSocket() {
     wsTelemetry.onclose = () => {
       wsStatus.value = "Terputus...";
       isConnected.value = false;
-      console.log("[WS Telemetry] Terputus. Mencoba reconnect dalam 3 detik...");
+      console.log(
+        "[WS Telemetry] Terputus. Mencoba reconnect dalam 3 detik...",
+      );
       setTimeout(connectTelemetry, 3000);
     };
 
@@ -70,13 +72,12 @@ export function initWebSocket() {
     };
   }
 
-
   // KONEKSI 2: CONTROL (Siklus & Hitung Mundur)
 
   function connectControl() {
     const wsControlURL = isDev
-      ? "wss://98.95.232.165/ws/control"
-      : `${protocol}${host}/ws/control`;
+      ? "wss://98.95.232.165/api/ws/control"
+      : `${protocol}${host}/api/ws/control`;
 
     wsControl = new WebSocket(wsControlURL);
 

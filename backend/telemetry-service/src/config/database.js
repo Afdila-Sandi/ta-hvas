@@ -13,7 +13,7 @@ pool.connect((err, client, release) => {
   if (err) {
     console.error("Gagal terhubung ke database:", err.message);
   } else {
-    console.log("Terhubung ke database PostgreSQL telemetry");
+    console.log("Terhubung ke database");
     release();
   }
 });

@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
-import Riwayat from "../views/Riwayat.vue";
+
 
 // Perbaikan Import: Pastikan nama import sama dengan nama komponen yang dipanggil di routes
 import TeknisiDashboard from "../views/TeknisiDashboard.vue";
@@ -30,11 +30,7 @@ const router = createRouter({
       component: TeknisiDashboard,
       meta: { requiresAuth: true, role: "teknisi" },
     },
-    {
-      path: "/riwayat",
-      name: "Riwayat",
-      component: Riwayat,
-    },
+
   ],
 });
 

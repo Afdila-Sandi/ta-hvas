@@ -10,7 +10,7 @@ exports.initSensorService = (wss) => {
 
   //konek mqtt
   mqttClient.on("connect", () => {
-    console.log("telemetry Service terhubung ke Broker MQTT");
+    console.log("terhubung ke Broker MQTT");
     mqttClient.subscribe("esp/data");
   });
 
