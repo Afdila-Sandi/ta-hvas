@@ -15,6 +15,10 @@
 
       <AdminLaporan v-if="currentMenu === 'laporan'" />
 
+      <div v-if="currentMenu === 'profil'" class="flex justify-center pt-10">
+        <AdminProfil />
+      </div>
+
       <div v-if="currentMenu === 'user'" class="space-y-6">
         <header class="flex justify-between items-end">
           <div>
@@ -89,7 +93,7 @@
         </div>
       </div>
     </main>
-
+    
     <AddUserModal
       v-if="isModalOpen"
       @close="isModalOpen = false"
@@ -122,7 +126,6 @@ const router = useRouter();
 const currentMenu = ref("dashboard");
 const isModalOpen = ref(false);
 
-// State untuk Modal Edit
 const isEditModalOpen = ref(false);
 const selectedUser = ref(null);
 
@@ -136,7 +139,6 @@ const fetchData = async () => {
     adminName.value = profileRes.data.nama;
     adminRole.value = profileRes.data.peran;
 
-    // PERUBAHAN: Menambahkan kembali ?role=teknisi agar API hanya mengambil data teknisi
     const usersRes = await api.get("/auth/users?role=teknisi");
     daftarTeknisi.value = usersRes.data;
   } catch (error) {
@@ -157,7 +159,7 @@ const bukaModalEdit = (teknisi) => {
 
 const handleUserEdited = () => {
   isEditModalOpen.value = false;
-  fetchData(); // Muat ulang tabel setelah edit berhasil
+  fetchData();
 };
 
 const hapusTeknisi = async (id) => {

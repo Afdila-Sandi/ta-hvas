@@ -105,11 +105,11 @@ const handleLogin = async () => {
     const userRole = localStorage.getItem("role") || authStore.userRole;
 
     if (userRole === "admin") {
-      router.push("/admin");
+      router.push("/adminDashboard");
     } else if (userRole === "teknisi") {
-      router.push("/teknisi");
+      router.push("/teknisiDashboard");
     } else {
-      router.push("/teknisi");
+      router.push("/teknisiDashboard");
     }
   } else {
     errorMessage.value =

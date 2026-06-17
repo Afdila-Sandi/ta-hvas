@@ -50,7 +50,10 @@
     </nav>
 
     <div class="p-6 border-t border-slate-100 bg-slate-50/50">
-      <div class="flex items-center gap-3 mb-5">
+      <div
+        class="flex items-center gap-3 mb-5 cursor-pointer hover:opacity-75 transition-opacity"
+        @click="$emit('changeMenu', 'profil')"
+      >
         <div
           class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-emerald-700 font-black border border-slate-200 shadow-sm uppercase shrink-0"
         >
