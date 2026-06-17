@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden"
-  >
+  <div class="flex h-screen bg-slate-50 font-sans text-slate-800 overflow-hidden">
     <AdminSidebar
       :activeMenu="currentMenu"
       :userName="adminName"
@@ -18,16 +16,12 @@
       <div v-if="currentMenu === 'user'" class="space-y-6">
         <header class="flex justify-between items-end">
           <div>
-            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">
-              Manajemen Teknisi
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">
-              Kelola akses akun teknisi lapangan.
-            </p>
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Manajemen Teknisi</h1>
+            <p class="text-sm text-slate-500 mt-1">Kelola akses akun teknisi lapangan.</p>
           </div>
           <button
             @click="isModalOpen = true"
-            class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition-colors"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95"
           >
             <i class="fa-solid fa-plus mr-1"></i> Tambah Teknisi
           </button>
@@ -41,62 +35,40 @@
               class="p-4 flex justify-between items-center hover:bg-slate-50 rounded-xl transition-colors"
             >
               <div class="flex items-center gap-4">
-                <div
-                  class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 uppercase border border-slate-200"
-                >
+                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 uppercase border border-slate-200">
                   {{ teknisi.nama.substring(0, 2) }}
                 </div>
                 <div>
-                  <strong class="text-slate-800 block capitalize">{{
-                    teknisi.nama
-                  }}</strong>
-                  <span class="text-sm text-slate-500">{{
-                    teknisi.username
-                  }}</span>
+                  <strong class="text-slate-800 block capitalize">{{ teknisi.nama }}</strong>
+                  <span class="text-sm text-slate-500">{{ teknisi.username }}</span>
                 </div>
               </div>
-              <div
-                class="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg"
-              >
-                Aktif
+
+              <div class="flex items-center gap-3">
+                <div class="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hidden sm:block uppercase tracking-wider">
+                  {{ teknisi.peran }}
+                </div>
+
+                <button
+                  @click="bukaModalEdit(teknisi)"
+                  class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-all active:scale-95"
+                >
+                  <i class="fa-solid fa-pen text-sm"></i>
+                </button>
+
+                <button
+                  @click="hapusTeknisi(teknisi.id)"
+                  class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-all active:scale-95"
+                >
+                  <i class="fa-solid fa-trash text-sm"></i>
+                </button>
               </div>
             </li>
+            
+            <li v-if="daftarTeknisi.length === 0" class="p-8 text-center text-slate-400 text-sm font-medium">
+              Belum ada data teknisi yang terdaftar.
+            </li>
           </ul>
-          <div class="flex items-center gap-4">
-            <div
-              class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 uppercase border border-slate-200"
-            >
-              {{ teknisi.nama.substring(0, 2) }}
-            </div>
-            <div>
-              <strong class="text-slate-800 block capitalize">{{
-                teknisi.nama
-              }}</strong>
-              <span class="text-sm text-slate-500">{{ teknisi.username }}</span>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <div
-              class="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-lg hidden sm:block"
-            >
-              Aktif
-            </div>
-
-            <button
-              @click="bukaModalEdit(teknisi)"
-              class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
-            >
-              <i class="fa-solid fa-pen text-sm"></i>
-            </button>
-
-            <button
-              @click="hapusTeknisi(teknisi.id)"
-              class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center transition-colors"
-            >
-              <i class="fa-solid fa-trash text-sm"></i>
-            </button>
-          </div>
         </div>
       </div>
     </main>
@@ -105,6 +77,13 @@
       v-if="isModalOpen"
       @close="isModalOpen = false"
       @success="handleUserAdded"
+    />
+
+    <EditUserModal
+      v-if="isEditModalOpen"
+      :userData="selectedUser"
+      @close="isEditModalOpen = false"
+      @success="handleUserEdited"
     />
   </div>
 </template>
@@ -118,50 +97,61 @@ import AdminSidebar from "../components/AdminSidebar.vue";
 import AdminStatistik from "../components/AdminStatistik.vue";
 import AdminLaporan from "../components/AdminLaporan.vue";
 import AddUserModal from "../components/AddUserModal.vue";
+import EditUserModal from "../components/EditUserModal.vue"; // Import Modal Edit
 
 const router = useRouter();
 
 const currentMenu = ref("dashboard");
 const isModalOpen = ref(false);
 
-const adminName = ref("Afdila Sandi");
-const adminRole = ref("Administrator");
+// State untuk Modal Edit
+const isEditModalOpen = ref(false);
+const selectedUser = ref(null);
+
+const adminName = ref("Memuat...");
+const adminRole = ref("Admin");
 const daftarTeknisi = ref([]);
 
 const fetchData = async () => {
   try {
-    // 1. Ambil nama profil asli dari database
     const profileRes = await api.get("/auth/profile");
     adminName.value = profileRes.data.nama;
-
-    // Peran sebenarnya masih bisa dibaca dari token jika mau,
-    // tapi karena API profile mengembalikan 'peran', kita pakai dari DB saja agar lebih aman.
     adminRole.value = profileRes.data.peran;
 
-    // 2. Ambil daftar teknisi
-    const usersRes = await api.get("/auth/users?role=teknisi");
+    // Menghapus ?role=teknisi agar admin juga bisa melihat/mengedit admin lain jika perlu,
+    // Atau biarkan jika hanya ingin melihat teknisi. Di sini saya biarkan semua agar fleksibel.
+    const usersRes = await api.get("/auth/users"); 
     daftarTeknisi.value = usersRes.data;
   } catch (error) {
-    console.error(
-      "Gagal mengambil data dari server:",
-      error.response?.data?.message || error.message,
-    );
-
-    // Fallback jika API gagal/error
-    adminName.value = "Admin Tidak Diketahui";
-    daftarTeknisi.value = [];
-
-    // Jika errornya karena token tidak valid (401), paksa logout
-    if (error.response?.status === 401) {
-      handleLogout();
-    }
+    console.error("Gagal mengambil data:", error);
+    if (error.response?.status === 401) handleLogout();
   }
 };
 
 const handleUserAdded = () => {
   isModalOpen.value = false;
-  alert("Akun teknisi baru berhasil ditambahkan!");
   fetchData();
+};
+
+const bukaModalEdit = (teknisi) => {
+  selectedUser.value = teknisi;
+  isEditModalOpen.value = true;
+};
+
+const handleUserEdited = () => {
+  isEditModalOpen.value = false;
+  fetchData(); // Muat ulang tabel setelah edit berhasil
+};
+
+const hapusTeknisi = async (id) => {
+  if (confirm("Apakah Anda yakin ingin menghapus akun ini secara permanen?")) {
+    try {
+      await api.delete(`/auth/users/${id}`);
+      fetchData(); 
+    } catch (error) {
+      alert(error.response?.data?.message || "Gagal menghapus pengguna.");
+    }
+  }
 };
 
 const handleLogout = () => {
@@ -173,33 +163,9 @@ const handleLogout = () => {
 onMounted(() => {
   fetchData();
 });
-
-const hapusTeknisi = async (id) => {
-  if (
-    confirm(
-      "Apakah Anda yakin ingin menghapus akun teknisi ini secara permanen?",
-    )
-  ) {
-    try {
-      await api.delete(`/auth/users/${id}`);
-      alert("Pengguna berhasil dihapus.");
-      fetchData(); // Segarkan ulang tabel
-    } catch (error) {
-      alert(
-        "Gagal menghapus pengguna: " +
-          (error.response?.data?.message || "Terjadi kesalahan"),
-      );
-    }
-  }
-};
 </script>
 
 <style scoped>
-main::-webkit-scrollbar {
-  display: none;
-}
-main {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+main::-webkit-scrollbar { display: none; }
+main { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
