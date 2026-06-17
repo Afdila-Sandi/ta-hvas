@@ -3,9 +3,8 @@ import { ref } from "vue";
 // State Ekspor untuk Komponen Vue
 export const wsStatus = ref("Menghubungkan...");
 export const isConnected = ref(false);
-export const timerEndTime = ref(null);
-export const cyclePhase = ref(null);
 
+// State Terpusat: Semua data dari sensor dan control digabung di sini
 export const sensorData = ref({
   suhu_bme: 0.0,
   kelembaban_bme: 0.0,
@@ -14,6 +13,9 @@ export const sensorData = ref({
   kelembaban_dht: 0.0,
   kebisingan: 0,
   status_pompa: "MEMUAT...",
+  mode: "MANUAL", // BARU: Mode yang sedang berjalan (MANUAL/TIMER/CYCLE)
+  sisa_waktu: 0, // BARU: Sisa waktu (menit) yang dihitung oleh ESP32
+  cycle_phase: null, // BARU: Fase saat ini (ON/OFF)
 });
 
 let wsTelemetry = null;
@@ -24,6 +26,7 @@ export function initWebSocket() {
   const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
   const host = window.location.host;
 
+  // --- KONEKSI 1: TELEMETRY (Data Sensor) ---
   function connectTelemetry() {
     const wsTelemetryURL = isDev
       ? "wss://98.95.232.165/api/ws/telemetry"
@@ -34,7 +37,7 @@ export function initWebSocket() {
     wsTelemetry.onopen = () => {
       wsStatus.value = "Terhubung";
       isConnected.value = true;
-      console.log("[WS telemetry] Berhasil terhubung.");
+      console.log("[WS Telemetry] Berhasil terhubung.");
     };
 
     wsTelemetry.onmessage = (event) => {
@@ -48,8 +51,9 @@ export function initWebSocket() {
           sensorData.value.kelembaban_dht = data.kelembaban_dht;
           sensorData.value.kebisingan = data.kebisingan;
 
-          // Cegah status pompa berkedip jika timer sedang berjalan
-          if (!timerEndTime.value) {
+          // Memastikan status_pompa dari telemetry hanya dipakai jika sistem sedang MANUAL
+          // (Jika AUTO, status_pompa lebih akurat diambil dari wsControl)
+          if (sensorData.value.mode === "MANUAL") {
             sensorData.value.status_pompa = data.status_pompa;
           }
         }
@@ -72,8 +76,7 @@ export function initWebSocket() {
     };
   }
 
-  // KONEKSI 2: CONTROL (Siklus & Hitung Mundur)
-
+  // --- KONEKSI 2: CONTROL (Status Siklus & Waktu) ---
   function connectControl() {
     const wsControlURL = isDev
       ? "wss://98.95.232.165/api/ws/control"
@@ -88,24 +91,14 @@ export function initWebSocket() {
     wsControl.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("[WS Control] Data diterima:", data); // Log ini akan membantu Anda memastikan data waktu benar-benar masuk
+        console.log("[WS Control] Data diterima:", data);
 
         if (data.type === "status_update" || data.type === "initial_status") {
+          // Tangkap status langsung dari ESP32
           sensorData.value.status_pompa = data.status_pompa;
-
-          // Menangkap waktu mundur
-          if (data.timer_end_time) {
-            timerEndTime.value = data.timer_end_time;
-          } else {
-            timerEndTime.value = null; // Bersihkan jika siklus dihentikan
-          }
-
-          // Menangkap fase siklus (ON/OFF)
-          if (data.cycle_phase) {
-            cyclePhase.value = data.cycle_phase;
-          } else {
-            cyclePhase.value = null;
-          }
+          sensorData.value.mode = data.mode || "MANUAL";
+          sensorData.value.sisa_waktu = data.sisa_waktu || 0;
+          sensorData.value.cycle_phase = data.cycle_phase || null;
         }
       } catch (err) {
         console.error("[WS Control] Gagal membaca data:", err);

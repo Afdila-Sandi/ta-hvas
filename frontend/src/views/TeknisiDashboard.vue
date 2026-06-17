@@ -131,7 +131,7 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { initWebSocket, closeWebSocket, isConnected } from "../services/ws";
 
-// Import 3 komponen yang sudah dipisah
+// Import komponen child
 import TeknisiKontrol from "../components/TeknisiKontrol.vue";
 import TeknisiRiwayat from "../components/TeknisiRiwayat.vue";
 import TeknisiSetelan from "../components/TeknisiSetelan.vue";
@@ -151,7 +151,7 @@ const currentComponent = computed(() => {
   }
 });
 
-// WebSocket hanya di-init satu kali di kerangka utama
+// WebSocket diinisialisasi secara global di kerangka utama
 onMounted(() => {
   initWebSocket();
 });
