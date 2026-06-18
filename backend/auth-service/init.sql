@@ -11,6 +11,6 @@ INSERT INTO users (username, password_hash, nama, peran)
 VALUES (
     'teknisi_bspji', 
     '$2b$10$03jCx2qCGy973Cg05O02cOAu/wenm1LIG1AZ3vM/DZlufXEw77Xo2', 
-    'Teknisi Lab BSPJI', 
-    'teknisi'
+    'Admin BSPJI', 
+    'admin'
 ) ON CONFLICT (username) DO NOTHING;

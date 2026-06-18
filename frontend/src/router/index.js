@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
-import TeknisiDashboard from "../views/teknisiDashboard.vue";
-import AdminDashboard from "../views/adminDashboard.vue";
+import TeknisiDashboard from "../views/TeknisiDashboard.vue";
+import AdminDashboard from "../views/AdminDashboard.vue";
 
 const router = createRouter({
   history: createWebHistory(),

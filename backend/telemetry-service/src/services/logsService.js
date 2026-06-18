@@ -4,30 +4,41 @@ const pool = require("../config/database");
 
 exports.initSensorService = (wss) => {
   const MQTT_BROKER = process.env.MQTT_BROKER;
-  const mqttClient = mqtt.connect(MQTT_BROKER);
+
+  // PENYESUAIAN 1: Tambahkan opsi agar Node.js menerima sertifikat SSL lokal
+  const mqttClient = mqtt.connect(MQTT_BROKER, {
+    rejectUnauthorized: false,
+  });
 
   let latestSensorData = null;
 
-  //konek mqtt
+  // PENYESUAIAN 2: Tambahkan deteksi error agar mudah melacak masalah di log Docker
+  mqttClient.on("error", (err) => {
+    console.error("[FATAL] Gagal konek ke MQTT Broker:", err.message);
+  });
+
+  mqttClient.on("offline", () => {
+    console.warn("[WARNING] MQTT Broker Offline atau Koneksi Ditolak!");
+  });
+
+  // konek mqtt
   mqttClient.on("connect", () => {
-    console.log("Terhubung ke Broker MQTT");
-    
+    console.log("Terhubung ke Broker MQTT via Port 8000");
     mqttClient.subscribe("esp/data/+");
   });
 
   mqttClient.on("message", (topic, message) => {
-
     const topicParts = topic.split("/");
-    const tokenMasuk = topicParts[2]; 
-    // Mengambil token asli dari file .env
+    const tokenMasuk = topicParts[2];
+
+    // token esp
     const TOKEN_RAHASIA = process.env.TOKEN_ESP;
 
     if (tokenMasuk !== TOKEN_RAHASIA) {
       console.warn(`[KEAMANAN] Data ditolak! Token tidak valid: ${tokenMasuk}`);
-      return; 
+      return;
     }
 
-    // Jika token benar, proses berlanjut seperti biasa
     try {
       const data = JSON.parse(message.toString());
       latestSensorData = {
@@ -41,7 +52,7 @@ exports.initSensorService = (wss) => {
         kebisingan: data.kebisingan || 0.0,
       };
 
-      //data realtime
+      // data realtime
       const realtimeData = { ...latestSensorData, type: "realtime_data" };
       const payload = JSON.stringify(realtimeData);
 
@@ -55,7 +66,7 @@ exports.initSensorService = (wss) => {
     }
   });
 
-  //menyimpan data ke db
+  // menyimpan data ke db
   setInterval(
     async () => {
       if (!latestSensorData) return;
