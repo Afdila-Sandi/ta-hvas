@@ -10,11 +10,24 @@ exports.initSensorService = (wss) => {
 
   //konek mqtt
   mqttClient.on("connect", () => {
-    console.log("terhubung ke Broker MQTT");
-    mqttClient.subscribe("esp/data");
+    console.log("Terhubung ke Broker MQTT");
+    
+    mqttClient.subscribe("esp/data/+");
   });
 
   mqttClient.on("message", (topic, message) => {
+
+    const topicParts = topic.split("/");
+    const tokenMasuk = topicParts[2]; 
+    // Mengambil token asli dari file .env
+    const TOKEN_RAHASIA = process.env.TOKEN_ESP;
+
+    if (tokenMasuk !== TOKEN_RAHASIA) {
+      console.warn(`[KEAMANAN] Data ditolak! Token tidak valid: ${tokenMasuk}`);
+      return; 
+    }
+
+    // Jika token benar, proses berlanjut seperti biasa
     try {
       const data = JSON.parse(message.toString());
       latestSensorData = {

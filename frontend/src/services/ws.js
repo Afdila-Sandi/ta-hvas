@@ -11,9 +11,9 @@ export const sensorData = ref({
   kelembaban_dht: 0.0,
   kebisingan: 0,
   status_pompa: "MEMUAT...",
-  mode: "MANUAL", 
-  sisa_waktu: 0, 
-  cycle_phase: null, 
+  mode: "MANUAL",
+  sisa_waktu: 0,
+  cycle_phase: null,
 });
 
 let wsTelemetry = null;
@@ -25,9 +25,10 @@ export function initWebSocket() {
   const host = window.location.host;
 
   function connectTelemetry() {
+
     const wsTelemetryURL = isDev
-      ? "wss://98.95.232.165/api/ws/telemetry"
-      : `${protocol}${host}/ws/telemetry`;
+      ? `${import.meta.env.VITE_WS_URL}/telemetry`
+      : `${protocol}${host}/api/ws/telemetry`; 
 
     wsTelemetry = new WebSocket(wsTelemetryURL);
 
@@ -72,9 +73,10 @@ export function initWebSocket() {
   }
 
   function connectControl() {
+
     const wsControlURL = isDev
-      ? "wss://98.95.232.165/api/ws/control"
-      : `${protocol}${host}/api/ws/control`;
+      ? `${import.meta.env.VITE_WS_URL}/control`
+      : `${protocol}${host}/api/ws/control`; 
 
     wsControl = new WebSocket(wsControlURL);
 

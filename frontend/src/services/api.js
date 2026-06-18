@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const isDev = import.meta.env.DEV;
-const baseURL = isDev ? "https://98.95.232.165/api" : "/api";
+const baseURL = isDev ? import.meta.env.VITE_API_URL : "/api";
 
 const api = axios.create({
   baseURL: baseURL,
