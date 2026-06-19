@@ -14,6 +14,10 @@ export const sensorData = ref({
   mode: "MANUAL",
   sisa_waktu: 0,
   cycle_phase: null,
+
+  suhu_esp: 0.0,            
+  status_kipas: "OFF",      
+  mode_kipas: "AUTO",
 });
 
 let wsTelemetry = null;
@@ -47,6 +51,10 @@ export function initWebSocket() {
           sensorData.value.suhu_dht = data.suhu_dht;
           sensorData.value.kelembaban_dht = data.kelembaban_dht;
           sensorData.value.kebisingan = data.kebisingan;
+
+          sensorData.value.suhu_esp = data.suhu_esp;      
+          sensorData.value.status_kipas = data.status_kipas;
+          sensorData.value.mode_kipas = data.mode_kipas;
 
           if (sensorData.value.mode === "MANUAL") {
             sensorData.value.status_pompa = data.status_pompa;

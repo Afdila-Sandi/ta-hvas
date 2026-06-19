@@ -5,14 +5,12 @@ const pool = require("../config/database");
 exports.initSensorService = (wss) => {
   const MQTT_BROKER = process.env.MQTT_BROKER;
 
-  // PENYESUAIAN 1: Tambahkan opsi agar Node.js menerima sertifikat SSL lokal
   const mqttClient = mqtt.connect(MQTT_BROKER, {
     rejectUnauthorized: false,
   });
 
   let latestSensorData = null;
 
-  // PENYESUAIAN 2: Tambahkan deteksi error agar mudah melacak masalah di log Docker
   mqttClient.on("error", (err) => {
     console.error("[FATAL] Gagal konek ke MQTT Broker:", err.message);
   });
@@ -21,7 +19,6 @@ exports.initSensorService = (wss) => {
     console.warn("[WARNING] MQTT Broker Offline atau Koneksi Ditolak!");
   });
 
-  // konek mqtt
   mqttClient.on("connect", () => {
     console.log("Terhubung ke Broker MQTT via Port 8000");
     mqttClient.subscribe("esp/data/+");
@@ -31,7 +28,6 @@ exports.initSensorService = (wss) => {
     const topicParts = topic.split("/");
     const tokenMasuk = topicParts[2];
 
-    // token esp
     const TOKEN_RAHASIA = process.env.TOKEN_ESP;
 
     if (tokenMasuk !== TOKEN_RAHASIA) {
@@ -50,9 +46,12 @@ exports.initSensorService = (wss) => {
         suhu_dht: data.suhu_dht || 0.0,
         kelembaban_dht: data.kelembaban_dht || 0.0,
         kebisingan: data.kebisingan || 0.0,
+        suhu_esp: data.suhu_esp || 0.0,
+        status_kipas: data.status_kipas || "OFF",
+        mode_kipas: data.mode_kipas || "AUTO",
       };
 
-      // data realtime
+      // Payload Realtime (Semua data terbawa)
       const realtimeData = { ...latestSensorData, type: "realtime_data" };
       const payload = JSON.stringify(realtimeData);
 
@@ -66,7 +65,7 @@ exports.initSensorService = (wss) => {
     }
   });
 
-  // menyimpan data ke db
+  // Fungsi simpan DB (suhu_esp tidak dimasukkan ke query ini)
   setInterval(
     async () => {
       if (!latestSensorData) return;

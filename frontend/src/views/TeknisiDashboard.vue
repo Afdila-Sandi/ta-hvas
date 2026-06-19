@@ -73,13 +73,13 @@
 
             <li>
               <button
-                @click="activeMenu = 'riwayat'"
+                @click="activeMenu = 'tren'"
                 class="flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
               >
                 <i
-                  class="fa-solid fa-chart-area text-xl"
+                  class="fa-solid fa-chart-line text-xl"
                   :class="
-                    activeMenu === 'riwayat'
+                    activeMenu === 'tren'
                       ? 'text-emerald-500'
                       : 'text-slate-400'
                   "
@@ -87,11 +87,11 @@
                 <span
                   class="text-[10px] font-bold"
                   :class="
-                    activeMenu === 'riwayat'
+                    activeMenu === 'tren'
                       ? 'text-emerald-600'
                       : 'text-slate-400'
                   "
-                  >Riwayat</span
+                  >Tren Data</span
                 >
               </button>
             </li>
@@ -131,19 +131,16 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { initWebSocket, closeWebSocket, isConnected } from "../services/ws";
 
-// Import komponen child
 import TeknisiKontrol from "../components/TeknisiKontrol.vue";
-import TeknisiRiwayat from "../components/TeknisiRiwayat.vue";
+import TeknisiTren from "../components/TeknisiRiwayat.vue";
 import TeknisiSetelan from "../components/TeknisiSetelan.vue";
 
-// State Menu Aktif
 const activeMenu = ref("kontrol");
 
-// Logika Dynamic Component
 const currentComponent = computed(() => {
   switch (activeMenu.value) {
-    case "riwayat":
-      return TeknisiRiwayat;
+    case "tren":
+      return TeknisiTren;
     case "setelan":
       return TeknisiSetelan;
     default:
@@ -151,7 +148,6 @@ const currentComponent = computed(() => {
   }
 });
 
-// WebSocket diinisialisasi secara global di kerangka utama
 onMounted(() => {
   initWebSocket();
 });
