@@ -5,35 +5,50 @@ const jwt = require("jsonwebtoken");
 exports.initControlService = (server, app) => {
   const SECRET_KEY = process.env.JWT_SECRET;
   const MQTT_BROKER = process.env.MQTT_BROKER;
-  const mqttClient = mqtt.connect(MQTT_BROKER);
+
+  // Ambil token dari environment, atau gunakan default dari ESP32
+  const TOKEN_ESP = process.env.TOKEN_ESP || "HVAS_Bspji_2026";
+
+  // Tambahkan opsi rejectUnauthorized untuk SSL lokal (sama seperti telemetry)
+  const mqttClient = mqtt.connect(MQTT_BROKER, {
+    rejectUnauthorized: false,
+  });
+
   const wss = new WebSocket.Server({ server, path: "/ws/control" });
 
-  // Memori sementara agar saat web di-refresh, status terakhir langsung muncul
+  // Memori sementara (ditambah kipas)
   let latestStatus = {
     status_pompa: "OFF",
     mode: "MANUAL",
     sisa_waktu: 0,
     cycle_phase: null,
+    status_kipas: "OFF",
+    mode_kipas: "AUTO",
   };
 
   mqttClient.on("connect", () => {
     console.log("Control Service terhubung ke Broker MQTT");
-    mqttClient.subscribe("esp/data"); // Mendengarkan laporan dari ESP32
+    // PERBAIKAN 1: Dengarkan semua topik data dari ESP
+    mqttClient.subscribe("esp/data/+");
   });
 
-  // MENANGKAP LAPORAN DARI ESP32 (Setiap 5 detik)
+  // MENANGKAP LAPORAN DARI ESP32
   mqttClient.on("message", (topic, message) => {
     try {
       const data = JSON.parse(message.toString());
 
-      // Jika di dalam payload ada data pompa, perbarui status
-      if (data.status_pompa) {
-        latestStatus.status_pompa = data.status_pompa;
-        latestStatus.mode = data.mode || "MANUAL";
+      // Perbarui status jika ada data pompa atau kipas yang masuk
+      if (data.status_pompa || data.status_kipas) {
+        latestStatus.status_pompa =
+          data.status_pompa || latestStatus.status_pompa;
+        latestStatus.mode = data.mode || latestStatus.mode;
         latestStatus.sisa_waktu = data.sisa_waktu || 0;
         latestStatus.cycle_phase = data.cycle_phase || null;
+        latestStatus.status_kipas =
+          data.status_kipas || latestStatus.status_kipas;
+        latestStatus.mode_kipas = data.mode_kipas || latestStatus.mode_kipas;
 
-        // Siarkan status terbaru ini ke semua browser (web) yang sedang terbuka
+        // Siarkan ke Web
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(
@@ -74,13 +89,15 @@ exports.initControlService = (server, app) => {
           .json({ success: false, message: "Akses ditolak." });
       }
 
-      // 2. Baca Perintah dari Web
-      const { action, durasi_on, durasi_off, durasi } = req.body;
+      // 2. Baca Perintah dari Web (Menerima parameter 'target' dan 'mode')
+      const { action, durasi_on, durasi_off, target, mode } = req.body;
       let payloadKeESP = {};
 
-      // 3. Ubah format perintah menjadi JSON sederhana untuk ESP32
-      if (action === "ON" || action === "OFF") {
-        payloadKeESP = { cmd: action };
+      // 3. PERBAIKAN 2: Ubah format perintah menjadi JSON yang dipahami ESP32 BARU
+      if (action === "SET_MODE_KIPAS") {
+        payloadKeESP = { action: "SET_MODE_KIPAS", mode: mode };
+      } else if (action === "ON" || action === "OFF") {
+        payloadKeESP = { action: action, target: target || "POMPA" };
       } else if (action === "CYCLE") {
         if (!durasi_on || !durasi_off) {
           return res
@@ -88,32 +105,24 @@ exports.initControlService = (server, app) => {
             .json({ success: false, message: "Durasi siklus tidak valid." });
         }
         payloadKeESP = {
-          cmd: "CYCLE",
-          on: parseInt(durasi_on),
-          off: parseInt(durasi_off),
+          action: "CYCLE",
+          durasi_on: parseInt(durasi_on),
+          durasi_off: parseInt(durasi_off),
         };
-      } else if (action === "TIMER") {
-        if (!durasi) {
-          return res
-            .status(400)
-            .json({ success: false, message: "Durasi timer tidak valid." });
-        }
-        payloadKeESP = { cmd: "TIMER", durasi: parseInt(durasi) }; // Durasi dalam menit
       } else {
         return res
           .status(400)
           .json({ success: false, message: "Aksi tidak valid." });
       }
 
-      // 4. Tembakkan perintah tersebut ke ESP32 via MQTT
-      mqttClient.publish("esp/pompa/kontrol", JSON.stringify(payloadKeESP));
+      // 4. PERBAIKAN 3: Tembakkan perintah ke topik yang didengarkan ESP32
+      const topicTujuan = `esp/control/${TOKEN_ESP}`;
+      mqttClient.publish(topicTujuan, JSON.stringify(payloadKeESP));
 
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: `Perintah ${action} diteruskan ke alat.`,
-        });
+      return res.status(200).json({
+        success: true,
+        message: `Perintah diteruskan ke alat via topik ${topicTujuan}`,
+      });
     });
   }
 

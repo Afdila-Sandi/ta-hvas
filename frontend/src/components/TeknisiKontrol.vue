@@ -290,7 +290,7 @@
             </span>
           </div>
           <span class="text-xs text-slate-400 font-medium"
-            >Suhu ESP32</span
+            >Suhu ESP</span
           >
           <div class="text-2xl font-black text-slate-800">
             {{
