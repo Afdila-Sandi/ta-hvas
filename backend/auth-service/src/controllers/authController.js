@@ -114,7 +114,6 @@ exports.register = async (req, res) => {
 // Fungsi untuk mengambil data profil diri sendiri
 exports.getProfile = async (req, res) => {
   try {
-    // req.user.id didapatkan secara otomatis dari middleware verifyToken
     const dbQuery = "SELECT id, username, nama, peran FROM users WHERE id = $1";
     const result = await pool.query(dbQuery, [req.user.id]);
 
@@ -133,7 +132,6 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Fungsi dinamis untuk mengambil daftar pengguna (Bisa difilter)
 exports.getUsers = async (req, res) => {
   const { role } = req.query;
 
@@ -142,7 +140,6 @@ exports.getUsers = async (req, res) => {
       "SELECT id, username, nama, peran FROM users ORDER BY nama ASC";
     let queryParams = [];
 
-    // Jika frontend meminta spesifik role teknisi atau admin
     if (role) {
       dbQuery =
         "SELECT id, username, nama, peran FROM users WHERE peran = $1 ORDER BY nama ASC";
@@ -159,7 +156,6 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-// Fungsi untuk memperbarui data pengguna (Update)
 exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { username, nama, peran, password } = req.body;
@@ -172,7 +168,6 @@ exports.updateUser = async (req, res) => {
   }
 
   try {
-    // Cek apakah user yang ingin diedit ada
     const checkUser = await pool.query("SELECT * FROM users WHERE id = $1", [
       id,
     ]);
@@ -185,7 +180,6 @@ exports.updateUser = async (req, res) => {
     let updateQuery;
     let queryParams;
 
-    // Jika admin juga mengisi kolom password (ingin mereset password teknisi)
     if (password && password.trim() !== "") {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
@@ -197,7 +191,6 @@ exports.updateUser = async (req, res) => {
       `;
       queryParams = [username, nama, peran, hashedPassword, id];
     } else {
-      // Jika password dibiarkan kosong, jangan ubah passwordnya
       updateQuery = `
         UPDATE users 
         SET username = $1, nama = $2, peran = $3 
@@ -223,11 +216,9 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// Fungsi untuk menghapus pengguna (Delete)
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
 
-  // Proteksi ganda: Jangan biarkan admin menghapus dirinya sendiri
   if (parseInt(id) === req.user.id) {
     return res
       .status(403)
@@ -269,7 +260,6 @@ exports.updateOwnProfile = async (req, res) => {
     let updateQuery;
     let queryParams;
 
-    // Jika pengguna juga mengisi kata sandi baru
     if (newPassword && newPassword.trim() !== "") {
       if (newPassword.length < 6) {
         return res
@@ -286,7 +276,6 @@ exports.updateOwnProfile = async (req, res) => {
       `;
       queryParams = [nama, username, hashedPassword, userId];
     } else {
-      // Jika kata sandi dibiarkan kosong
       updateQuery = `
         UPDATE users 
         SET nama = $1, username = $2 
@@ -305,7 +294,6 @@ exports.updateOwnProfile = async (req, res) => {
   } catch (error) {
     console.error("Error update profile:", error.message);
 
-    // Tangkap error jika username sudah dipakai orang lain (PostgreSQL Error Code: 23505)
     if (error.code === "23505") {
       return res
         .status(400)
