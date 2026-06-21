@@ -481,10 +481,7 @@ const kirimJadwalSiklus = async () => {
       durasi_off: dOff,
     });
 
-    // --- PERBAIKAN: Optimistic Update ---
-    // Memberikan respons instan pada UI web sebelum ESP32 membalas
     sensorData.value.sisa_waktu = dOn;
-    // ------------------------------------
 
     sensorData.value.mode = "CYCLE";
     sensorData.value.cycle_phase = "ON";

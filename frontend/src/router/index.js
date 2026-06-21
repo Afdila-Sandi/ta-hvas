@@ -31,7 +31,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  // Cek apakah halaman ini butuh login?
+
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
   // Ambil token dari penyimpanan

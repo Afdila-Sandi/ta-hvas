@@ -57,13 +57,10 @@ export function initWebSocket() {
           sensorData.value.mode_kipas = data.mode_kipas;
 
           // --- PERBAIKAN: Sinkronisasi Total ---
-          // Memaksa state sinkron 100% dengan data terbaru dari ESP32
-          // Tidak peduli apakah mode MANUAL atau CYCLE
           sensorData.value.status_pompa = data.status_pompa;
           sensorData.value.mode = data.mode;
           sensorData.value.cycle_phase = data.cycle_phase;
           sensorData.value.sisa_waktu = data.sisa_waktu;
-          // -----------------------------------
         }
       } catch (err) {
         console.error("[WS Telemetry] Gagal membaca data:", err);
