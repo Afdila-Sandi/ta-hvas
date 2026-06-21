@@ -249,7 +249,7 @@
               : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
           "
         >
-          Paksa Nyala
+          Nyalakan
         </button>
         <button
           @click="kirimPerintahKipas('OFF')"
@@ -289,15 +289,26 @@
               {{ infoSuhuESP.label }}
             </span>
           </div>
-          <span class="text-xs text-slate-400 font-medium"
-            >Suhu ESP</span
-          >
+          <span class="text-xs text-slate-400 font-medium">Suhu ESP</span>
           <div class="text-2xl font-black text-slate-800">
             {{
               sensorData.suhu_esp
                 ? parseFloat(sensorData.suhu_esp).toFixed(1)
                 : "-"
             }}<span class="text-sm text-slate-400 font-normal">°C</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+          <div
+            class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 mb-3"
+          >
+            <i class="fa-solid fa-wind"></i>
+          </div>
+          <span class="text-xs text-slate-400 font-medium">Tekanan Udara</span>
+          <div class="text-2xl font-black text-slate-800">
+            {{ sensorData.tekanan
+            }}<span class="text-sm text-slate-400 font-normal">hPa</span>
           </div>
         </div>
 
@@ -350,19 +361,6 @@
           <div class="text-2xl font-black text-slate-800">
             {{ sensorData.kelembaban_dht
             }}<span class="text-sm text-slate-400 font-normal">%</span>
-          </div>
-        </div>
-
-        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-          <div
-            class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 mb-3"
-          >
-            <i class="fa-solid fa-wind"></i>
-          </div>
-          <span class="text-xs text-slate-400 font-medium">Tekanan Udara</span>
-          <div class="text-2xl font-black text-slate-800">
-            {{ sensorData.tekanan
-            }}<span class="text-sm text-slate-400 font-normal">hPa</span>
           </div>
         </div>
 
@@ -422,7 +420,7 @@ const sisaWaktuVisual = computed(() => {
   return `${h} Jam ${m} Menit`;
 });
 
-// --- TAMBAHAN BARU: Status Warna Suhu ESP32 ---
+// Status Warna Suhu ESP32
 const infoSuhuESP = computed(() => {
   const suhu = parseFloat(sensorData.value.suhu_esp) || 0;
   if (suhu === 0)
@@ -448,7 +446,6 @@ const infoSuhuESP = computed(() => {
     };
   }
 });
-// ----------------------------------------------
 
 const kirimPerintahPompa = async (status) => {
   isSending.value = true;
@@ -483,6 +480,12 @@ const kirimJadwalSiklus = async () => {
       durasi_on: dOn,
       durasi_off: dOff,
     });
+
+    // --- PERBAIKAN: Optimistic Update ---
+    // Memberikan respons instan pada UI web sebelum ESP32 membalas
+    sensorData.value.sisa_waktu = dOn;
+    // ------------------------------------
+
     sensorData.value.mode = "CYCLE";
     sensorData.value.cycle_phase = "ON";
   } catch (error) {

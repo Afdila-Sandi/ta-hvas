@@ -49,6 +49,10 @@ exports.initSensorService = (wss) => {
         suhu_esp: data.suhu_esp || 0.0,
         status_kipas: data.status_kipas || "OFF",
         mode_kipas: data.mode_kipas || "AUTO",
+
+        mode: data.mode || "MANUAL",
+        cycle_phase: data.cycle_phase || "OFF",
+        sisa_waktu: data.sisa_waktu || 0,
       };
 
       // Payload Realtime (Semua data terbawa)
