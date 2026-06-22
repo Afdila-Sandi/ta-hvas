@@ -31,51 +31,57 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-  // Ambil token dari penyimpanan
-  const token = localStorage.getItem("hvas_jwt_token");
+  // --- PERBAIKAN UTAMA: Gunakan nama Access Token yang baru ---
+  const token = localStorage.getItem("hvas_access_token");
 
-  // Halaman butuh login, tapi user tidak punya token
+  // 1. Halaman butuh login, tapi user tidak punya token
   if (requiresAuth && !token) {
     alert("Silakan login terlebih dahulu.");
     return next("/login");
   }
 
-  // cek rute
+  // 2. Cek Rute dan Hak Akses (Role-based Guarding)
   if (requiresAuth && token) {
     try {
-      // melihat isi jwt
+      // Melihat isi JWT Access Token
       const payloadBase64 = token.split(".")[1];
       const decodedJson = atob(payloadBase64);
       const userData = JSON.parse(decodedJson);
       const userRole = userData.role;
 
       if (to.meta.role && to.meta.role !== userRole) {
-        // Jika Teknisi mencoba masuk halaman /adminDashboard
+        // Jika Teknisi mencoba masuk halaman admin
         if (userRole === "teknisi") return next("/teknisiDashboard");
-        // Jika Admin mencoba masuk halaman /teknisiDashboard
+        // Jika Admin mencoba masuk halaman teknisi
         if (userRole === "admin") return next("/adminDashboard");
       }
     } catch (error) {
-      // Jika token rusak/dimanipulasi, hapus dan usir ke login
-      localStorage.removeItem("hvas_jwt_token");
+      // Jika token rusak/dimanipulasi, bersihkan semua token dan usir ke login
+      localStorage.removeItem("hvas_access_token");
+      localStorage.removeItem("hvas_refresh_token");
+      localStorage.removeItem("role");
       return next("/login");
     }
   }
 
-  // User sudah login, tapi mencoba kembali ke halaman /login
-  if (to.path === "/login" && token) {
+  // 3. User sudah login, tapi mencoba kembali ke halaman /login atau root
+  if ((to.path === "/login" || to.path === "/") && token) {
     try {
       const payloadBase64 = token.split(".")[1];
       const decodedJson = atob(payloadBase64);
       const userData = JSON.parse(decodedJson);
-      return next(userData.role === "admin" ? "/adminDashboard" : "/teknisiDashboard");
+      // Langsung arahkan ke dasbor yang sesuai
+      return next(
+        userData.role === "admin" ? "/adminDashboard" : "/teknisiDashboard",
+      );
     } catch (e) {
+      // Abaikan error di sini, biarkan jatuh ke catch di atas jika token rusak
     }
   }
 
+  // 4. Jika semua pemeriksaan lolos, izinkan masuk
   next();
 });
 

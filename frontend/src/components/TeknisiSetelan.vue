@@ -132,8 +132,10 @@ import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import api from "../services/api";
 import { closeWebSocket } from "../services/ws";
+import { useAuthStore } from "../stores/auth";
 
 const router = useRouter();
+const authStore = useAuthStore();
 const userName = ref("");
 const userRole = ref("");
 
@@ -199,11 +201,10 @@ const updateProfile = async () => {
   }
 };
 
-const handleLogout = () => {
+const handleLogout = async () => {
   if (confirm("Yakin ingin keluar?")) {
-    localStorage.removeItem("hvas_jwt_token");
-    localStorage.removeItem("role");
     closeWebSocket();
+    await authStore.logout();
     router.push("/login");
   }
 };

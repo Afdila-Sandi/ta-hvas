@@ -7,7 +7,7 @@
       :userName="adminName"
       :userRole="adminRole"
       @changeMenu="currentMenu = $event"
-      @logout="handleLogout"
+      @logout="prosesLogoutAdmin"
     />
 
     <main class="flex-1 overflow-y-auto p-8 lg:p-12 relative">
@@ -93,7 +93,7 @@
         </div>
       </div>
     </main>
-    
+
     <AddUserModal
       v-if="isModalOpen"
       @close="isModalOpen = false"
@@ -112,6 +112,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 import api from "../services/api";
 
 import AdminSidebar from "../components/AdminSidebar.vue";
@@ -121,6 +122,7 @@ import AddUserModal from "../components/AddUserModal.vue";
 import EditUserModal from "../components/EditUserModal.vue";
 import AdminProfil from "../components/AdminProfil.vue";
 
+const authStore = useAuthStore();
 const router = useRouter();
 
 const currentMenu = ref("dashboard");
@@ -173,9 +175,8 @@ const hapusTeknisi = async (id) => {
   }
 };
 
-const handleLogout = () => {
-  localStorage.removeItem("hvas_jwt_token");
-  localStorage.removeItem("role");
+const prosesLogoutAdmin = async () => {
+  await authStore.logout();
   router.push("/login");
 };
 
