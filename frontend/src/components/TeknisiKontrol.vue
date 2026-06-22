@@ -363,27 +363,6 @@
             }}<span class="text-sm text-slate-400 font-normal">%</span>
           </div>
         </div>
-
-        <div
-          class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 col-span-2"
-        >
-          <div class="flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <div
-                class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
-              >
-                <i class="fa-solid fa-wave-square"></i>
-              </div>
-              <span class="text-xs text-slate-400 font-medium"
-                >Kebisingan Ruang</span
-              >
-            </div>
-            <div class="text-2xl font-black text-slate-800">
-              {{ sensorData.kebisingan
-              }}<span class="text-sm text-slate-400 font-normal ml-1">dB</span>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   </div>
