@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     nama VARCHAR(100) NOT NULL,
     peran VARCHAR(50) CHECK (peran IN ('teknisi', 'admin')) NOT NULL,
-    dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    refresh_token TEXT DEFAULT NULL
 );
 
 INSERT INTO users (username, password_hash, nama, peran) 

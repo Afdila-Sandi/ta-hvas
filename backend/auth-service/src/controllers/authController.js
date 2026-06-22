@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/database");
 
-// login
+// login (MODIFIKASI: DUAL TOKEN)
 exports.login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -30,23 +30,39 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Buat JWT
+    //buat token jwt
     const SECRET_KEY = process.env.JWT_SECRET;
-    const token = jwt.sign(
+    const REFRESH_SECRET =
+      process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia"; 
+
+    // Access Token: Umur pendek (15 menit)
+    const accessToken = jwt.sign(
       {
         id: user.id,
         username: user.username,
         role: user.peran,
       },
       SECRET_KEY,
-      { expiresIn: "24h" },
+      { expiresIn: "15m" },
+    );
+
+    // Refresh Token: Umur panjang (24 Jam)
+    const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, {
+      expiresIn: "24h",
+    });
+
+    //update token
+    await pool.query(
+      "UPDATE users SET refresh_token = $1 WHERE id = $2",
+      [refreshToken, user.id],
     );
 
     // Kirim respon
     return res.status(200).json({
       success: true,
       message: "Otentikasi berhasil",
-      token: token,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       role: user.peran,
     });
   } catch (error) {
@@ -55,6 +71,92 @@ exports.login = async (req, res) => {
       success: false,
       message: "Terjadi kesalahan pada peladen",
     });
+  }
+};
+
+//refresh token
+exports.refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Refresh token tidak tersedia." });
+  }
+
+  try {
+    const REFRESH_SECRET =
+      process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia";
+
+    //verivikasi sesi
+    const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
+
+    //cekdb untuk validasi sesi
+    const dbQuery =
+      "SELECT refresh_token, username, peran FROM users WHERE id = $1";
+    const result = await pool.query(dbQuery, [decoded.id]);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Pengguna tidak ditemukan." });
+    }
+
+    const user = result.rows[0];
+
+    //cek token di db
+    if (user.refresh_token !== refreshToken) {
+      // Jika beda tendang
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message:
+            "Sesi telah digantikan oleh perangkat lain. Silakan login kembali.",
+        });
+    }
+
+    //Buat Access Token baru (15 menit)
+    const SECRET_KEY = process.env.JWT_SECRET;
+    const newAccessToken = jwt.sign(
+      {
+        id: decoded.id,
+        username: user.username,
+        role: user.peran,
+      },
+      SECRET_KEY,
+      { expiresIn: "15m" },
+    );
+
+    return res.status(200).json({ success: true, accessToken: newAccessToken });
+  } catch (error) {
+    console.error("Error refresh token:", error.message);
+    return res
+      .status(403)
+      .json({
+        success: false,
+        message:
+          "Refresh token kedaluwarsa atau tidak valid. Silakan login ulang.",
+      });
+  }
+};
+
+//Logout Endpoint
+exports.logout = async (req, res) => {
+  try {
+    await pool.query(
+      "UPDATE users SET refresh_token = NULL WHERE id = $1",
+      [req.user.id],
+    );
+    return res.status(200).json({ success: true, message: "Logout berhasil." });
+  } catch (error) {
+    console.error("Error logout:", error.message);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Terjadi kesalahan peladen saat logout.",
+      });
   }
 };
 
@@ -111,6 +213,7 @@ exports.register = async (req, res) => {
     });
   }
 };
+
 // Fungsi untuk mengambil data profil diri sendiri
 exports.getProfile = async (req, res) => {
   try {
@@ -207,12 +310,10 @@ exports.updateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("Error update user:", error.message);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Terjadi kesalahan pada peladen saat memperbarui pengguna.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan pada peladen saat memperbarui pengguna.",
+    });
   }
 };
 
@@ -220,12 +321,10 @@ exports.deleteUser = async (req, res) => {
   const { id } = req.params;
 
   if (parseInt(id) === req.user.id) {
-    return res
-      .status(403)
-      .json({
-        success: false,
-        message: "Anda tidak dapat menghapus akun Anda sendiri!",
-      });
+    return res.status(403).json({
+      success: false,
+      message: "Anda tidak dapat menghapus akun Anda sendiri!",
+    });
   }
 
   try {
@@ -243,12 +342,10 @@ exports.deleteUser = async (req, res) => {
       .json({ success: true, message: "Pengguna berhasil dihapus." });
   } catch (error) {
     console.error("Error delete user:", error.message);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Terjadi kesalahan pada peladen saat menghapus pengguna.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan pada peladen saat menghapus pengguna.",
+    });
   }
 };
 
@@ -295,12 +392,10 @@ exports.updateOwnProfile = async (req, res) => {
     console.error("Error update profile:", error.message);
 
     if (error.code === "23505") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Username tersebut sudah digunakan.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Username tersebut sudah digunakan.",
+      });
     }
 
     return res
