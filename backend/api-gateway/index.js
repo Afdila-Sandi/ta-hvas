@@ -1,9 +1,15 @@
+require("dotenv").config();
+
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
+const corsOptions = {
+    origin: process.env.FRONTEND_URL,
+    credentials: true 
+};
+app.use(cors(corsOptions));
 
 console.log("api gateway");
 

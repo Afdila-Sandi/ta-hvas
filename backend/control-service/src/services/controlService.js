@@ -12,7 +12,7 @@ exports.initControlService = (server, app) => {
     rejectUnauthorized: false,
   });
 
-  const wss = new WebSocket.Server({ server, path: "/ws/control" });
+  const wss = new WebSocket.Server({ server, path: "/api/ws/control" });
 
   let latestStatus = {
     status_pompa: "OFF",
