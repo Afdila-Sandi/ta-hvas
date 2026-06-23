@@ -116,7 +116,7 @@ const updateAdminProfile = async () => {
 
     isError.value = false;
     pesan.value = "Profil berhasil diperbarui!";
-    form.newPassword = ""; // Kosongkan password setelah sukses
+    form.newPassword = ""; 
 
     // Refresh halaman setelah 1.5 detik agar nama di pojok kiri atas ikut berubah
     setTimeout(() => {

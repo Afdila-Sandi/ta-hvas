@@ -6,17 +6,14 @@ exports.initControlService = (server, app) => {
   const SECRET_KEY = process.env.JWT_SECRET;
   const MQTT_BROKER = process.env.MQTT_BROKER;
 
-  // Ambil token dari environment, atau gunakan default dari ESP32
   const TOKEN_ESP = process.env.TOKEN_ESP || "HVAS_Bspji_2026";
 
-  // Tambahkan opsi rejectUnauthorized untuk SSL lokal (sama seperti telemetry)
   const mqttClient = mqtt.connect(MQTT_BROKER, {
     rejectUnauthorized: false,
   });
 
   const wss = new WebSocket.Server({ server, path: "/ws/control" });
 
-  // Memori sementara (ditambah kipas)
   let latestStatus = {
     status_pompa: "OFF",
     mode: "MANUAL",
@@ -28,16 +25,12 @@ exports.initControlService = (server, app) => {
 
   mqttClient.on("connect", () => {
     console.log("Control Service terhubung ke Broker MQTT");
-    // PERBAIKAN 1: Dengarkan semua topik data dari ESP
     mqttClient.subscribe("esp/data/+");
   });
 
-  // MENANGKAP LAPORAN DARI ESP32
   mqttClient.on("message", (topic, message) => {
     try {
       const data = JSON.parse(message.toString());
-
-      // Perbarui status jika ada data pompa atau kipas yang masuk
       if (data.status_pompa || data.status_kipas) {
         latestStatus.status_pompa =
           data.status_pompa || latestStatus.status_pompa;
@@ -47,8 +40,6 @@ exports.initControlService = (server, app) => {
         latestStatus.status_kipas =
           data.status_kipas || latestStatus.status_kipas;
         latestStatus.mode_kipas = data.mode_kipas || latestStatus.mode_kipas;
-
-        // Siarkan ke Web
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(
@@ -58,14 +49,11 @@ exports.initControlService = (server, app) => {
         });
       }
     } catch (err) {
-      // Abaikan jika bukan JSON
     }
   });
 
-  // MENERIMA PERINTAH DARI WEB DAN MELEMPAR KE ESP32
   if (app) {
     app.post("/", (req, res) => {
-      // 1. Verifikasi Keamanan JWT
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res
@@ -89,11 +77,9 @@ exports.initControlService = (server, app) => {
           .json({ success: false, message: "Akses ditolak." });
       }
 
-      // 2. Baca Perintah dari Web (Menerima parameter 'target' dan 'mode')
       const { action, durasi_on, durasi_off, target, mode } = req.body;
       let payloadKeESP = {};
 
-      // 3. PERBAIKAN 2: Ubah format perintah menjadi JSON yang dipahami ESP32 BARU
       if (action === "SET_MODE_KIPAS") {
         payloadKeESP = { action: "SET_MODE_KIPAS", mode: mode };
       } else if (action === "ON" || action === "OFF") {
@@ -115,7 +101,6 @@ exports.initControlService = (server, app) => {
           .json({ success: false, message: "Aksi tidak valid." });
       }
 
-      // 4. PERBAIKAN 3: Tembakkan perintah ke topik yang didengarkan ESP32
       const topicTujuan = `esp/control/${TOKEN_ESP}`;
       mqttClient.publish(topicTujuan, JSON.stringify(payloadKeESP));
 
@@ -126,7 +111,6 @@ exports.initControlService = (server, app) => {
     });
   }
 
-  // JIKA ADA WEB YANG BARU DIBUKA (REFRESH), KIRIM STATUS TERAKHIR
   wss.on("connection", (ws) => {
     ws.send(JSON.stringify({ ...latestStatus, type: "initial_status" }));
   });

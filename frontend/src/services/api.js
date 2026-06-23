@@ -5,7 +5,7 @@ const baseURL = isDev ? import.meta.env.VITE_API_URL : "/api";
 
 const api = axios.create({
   baseURL: baseURL,
-  withCredentials: true, // WAJIB: Mengizinkan pengiriman dan penerimaan Cookie
+  withCredentials: true, 
   headers: {
     "Content-Type": "application/json",
   },
@@ -34,13 +34,11 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // PERUBAHAN: Tidak perlu mencari refresh token di localStorage.
-        // Langsung tembak endpoint refresh, Cookie akan terkirim otomatis oleh peramban.
         const res = await axios.post(
           `${baseURL}/auth/refresh`,
           {},
           {
-            withCredentials: true, // Pastikan request axios mandiri ini juga membawa cookie
+            withCredentials: true, 
           },
         );
 
@@ -63,11 +61,10 @@ api.interceptors.response.use(
 );
 
 function forceLogout(pesan) {
-  // Hanya hapus access_token, refresh token diurus oleh backend
+
   localStorage.removeItem("hvas_access_token");
   localStorage.removeItem("role");
 
-  // Hapus sisa-sisa kunci lama jika masih ada
   localStorage.removeItem("hvas_jwt_token");
   localStorage.removeItem("hvas_refresh_token");
 

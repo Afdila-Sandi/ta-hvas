@@ -56,7 +56,6 @@ export function initWebSocket() {
           sensorData.value.status_kipas = data.status_kipas;
           sensorData.value.mode_kipas = data.mode_kipas;
 
-          // --- PERBAIKAN: Sinkronisasi Total ---
           sensorData.value.status_pompa = data.status_pompa;
           sensorData.value.mode = data.mode;
           sensorData.value.cycle_phase = data.cycle_phase;

@@ -55,7 +55,6 @@ exports.initSensorService = (wss) => {
         sisa_waktu: data.sisa_waktu || 0,
       };
 
-      // Payload Realtime (Semua data terbawa)
       const realtimeData = { ...latestSensorData, type: "realtime_data" };
       const payload = JSON.stringify(realtimeData);
 
@@ -69,7 +68,6 @@ exports.initSensorService = (wss) => {
     }
   });
 
-  // Fungsi simpan DB (suhu_esp tidak dimasukkan ke query ini)
   setInterval(
     async () => {
       if (!latestSensorData) return;

@@ -189,7 +189,7 @@ const isLoading = ref(false);
 const allDataRaw = ref([]);
 const data24Jam = ref([]);
 
-// Default Form (Disesuaikan dengan standar pengujian ambien)
+// Default Form 
 const formLaporan = reactive({
   perusahaan: "",
   parameter: "Kualitas Udara Ambien",
@@ -214,22 +214,18 @@ const formatDateLengkap = (dateObj) => {
   });
 };
 
-// --- LOGIKA CERDAS: MENGUBAH DATA 5 MENIT MENJADI 1 JAM ---
 const prosesDataSampling = async () => {
   if (!formLaporan.waktuMulai) return;
   isLoading.value = true;
   data24Jam.value = [];
 
   try {
-    // 1. Ambil seluruh data mentah dari DB (Bisa dioptimalkan dengan query params di backend jika ada)
     const response = await api.get("/telemetry/logs");
     allDataRaw.value = response.data;
 
-    // 2. Tentukan Titik Awal dan Batas Akhir (24 Jam)
     const startTimestamp = new Date(formLaporan.waktuMulai).getTime();
     const endTimestamp = startTimestamp + 24 * 60 * 60 * 1000;
 
-    // 3. Potong data hanya di rentang waktu tersebut
     const dataDalamRentang = allDataRaw.value.filter((item) => {
       const time = new Date(item.waktu || item.timestamp).getTime();
       return time >= startTimestamp && time <= endTimestamp;
@@ -243,25 +239,20 @@ const prosesDataSampling = async () => {
       return;
     }
 
-    // 4. Kelompokkan Data Per Jam dan Hitung Rata-ratanya
     const hitunganPerJam = [];
 
-    // Looping untuk membuat 24 slot jam
     for (let i = 0; i < 24; i++) {
       const jamMulaiSlot = startTimestamp + i * 60 * 60 * 1000;
       const jamSelesaiSlot = jamMulaiSlot + 60 * 60 * 1000 - 1;
 
-      // Cari semua data 5-menitan yang masuk ke dalam slot 1 jam ini
       const dataDiSlotIni = dataDalamRentang.filter((item) => {
         const time = new Date(item.waktu || item.timestamp).getTime();
         return time >= jamMulaiSlot && time <= jamSelesaiSlot;
       });
 
-      // Buat label jam, misal: "08:00 WIB"
       const labelWaktu = formatDateTimeStr(new Date(jamMulaiSlot));
 
       if (dataDiSlotIni.length > 0) {
-        // Hitung rata-rata jika ada data
         const avgSuhuBme = (
           dataDiSlotIni.reduce(
             (acc, curr) => acc + (parseFloat(curr.suhu_bme) || 0),
@@ -288,7 +279,6 @@ const prosesDataSampling = async () => {
           suhu_dht: avgSuhuDht,
         });
       } else {
-        // Jika alat mati di jam tersebut, tulis '-'
         hitunganPerJam.push({
           labelWaktu: labelWaktu,
           suhu_bme: "-",
@@ -307,27 +297,21 @@ const prosesDataSampling = async () => {
   }
 };
 
-// --- FUNGSI EKSPOR EXCEL (CSV FORMAT RAPI & EXCEL-FRIENDLY) ---
 const unduhLaporanExcel = () => {
   if (data24Jam.value.length === 0) return;
 
   const tglMulaiObj = new Date(formLaporan.waktuMulai);
   const tglSelesaiObj = new Date(tglMulaiObj.getTime() + 24 * 60 * 60 * 1000);
 
-  // 1. Membuat KOP SURAT (Gunakan titik koma ';' sebagai pemisah kolom)
   let csvContent = "LAPORAN HASIL PENGUJIAN KUALITAS UDARA\n\n";
   csvContent += `Nama Perusahaan / Instansi ;: ${formLaporan.perusahaan.toUpperCase()}\n`;
   csvContent += `Parameter Pengujian        ;: ${formLaporan.parameter}\n`;
   csvContent += `Petugas Teknisi / Sampler  ;: ${formLaporan.teknisi}\n`;
   csvContent += `Tanggal Pengambilan        ;: ${formatDateLengkap(tglMulaiObj)} s.d ${formatDateLengkap(tglSelesaiObj)}\n\n`;
-
-  // 2. Membuat Header Tabel Data (Gunakan titik koma)
   csvContent +=
     "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (°C);Kelembaban Ruang Box (%);Suhu Lingkungan (°C)\n";
 
-  // 3. Memasukkan 24 Baris Data
   data24Jam.value.forEach((row, index) => {
-    // Ubah titik desimal ke koma agar sesuai standar Indonesia di Excel (opsional tapi disarankan)
     const suhuBmeIndo =
       row.suhu_bme !== "-" ? row.suhu_bme.replace(".", ",") : "-";
     const lembabBmeIndo =
@@ -341,7 +325,7 @@ const unduhLaporanExcel = () => {
       suhuBmeIndo,
       lembabBmeIndo,
       suhuDhtIndo,
-    ].join(";"); // <-- Kunci rahasianya: join menggunakan Titik Koma
+    ].join(";"); 
 
     csvContent += baris + "\n";
   });

@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/database");
 
-// Login Endpoint
+//login
 exports.login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -29,14 +29,14 @@ exports.login = async (req, res) => {
     const REFRESH_SECRET =
       process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia";
 
-    // Access Token: 15 menit
+    //token 15 menit
     const accessToken = jwt.sign(
       { id: user.id, username: user.username, role: user.peran },
       SECRET_KEY,
       { expiresIn: "15m" },
     );
 
-    // Refresh Token: 24 Jam
+    //refresh token 24 Jam
     const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, {
       expiresIn: "24h",
     });
@@ -53,7 +53,7 @@ exports.login = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, 
     });
 
-    // Kirim respon (TANPA menyertakan refresh token di JSON)
+    //respon
     return res.status(200).json({
       success: true,
       message: "Otentikasi berhasil",
@@ -68,9 +68,8 @@ exports.login = async (req, res) => {
   }
 };
 
-// Refresh Token Endpoint
+//refresh token 
 exports.refreshToken = async (req, res) => {
-  // PERUBAHAN: Baca Refresh Token dari Cookie, bukan dari body
   const refreshToken = req.cookies?.hvas_refresh_token;
 
   if (!refreshToken) {
@@ -99,9 +98,9 @@ exports.refreshToken = async (req, res) => {
 
     const user = result.rows[0];
 
-    // Deteksi Single Session (Menendang perangkat lain)
+    //single session
     if (user.refresh_token !== refreshToken) {
-      res.clearCookie("hvas_refresh_token"); // Bersihkan cookie peretas/perangkat lama
+      res.clearCookie("hvas_refresh_token");
       return res.status(403).json({
         success: false,
         message:
@@ -119,7 +118,7 @@ exports.refreshToken = async (req, res) => {
     return res.status(200).json({ success: true, accessToken: newAccessToken });
   } catch (error) {
     console.error("Error refresh token:", error.message);
-    res.clearCookie("hvas_refresh_token"); // Bersihkan cookie jika kedaluwarsa/rusak
+    res.clearCookie("hvas_refresh_token"); 
     return res.status(403).json({
       success: false,
       message:
@@ -128,14 +127,13 @@ exports.refreshToken = async (req, res) => {
   }
 };
 
-// Logout Endpoint
+//logout
 exports.logout = async (req, res) => {
   try {
     await pool.query("UPDATE users SET refresh_token = NULL WHERE id = $1", [
       req.user.id,
     ]);
 
-    // PERUBAHAN: Perintahkan peramban untuk menghapus Cookie
     res.clearCookie("hvas_refresh_token");
 
     return res.status(200).json({ success: true, message: "Logout berhasil." });
@@ -154,7 +152,6 @@ exports.logout = async (req, res) => {
 exports.register = async (req, res) => {
   const { username, password, nama, peran } = req.body;
 
-  // validasi peran
   if (!["teknisi", "admin"].includes(peran)) {
     return res.status(400).json({
       success: false,
@@ -163,7 +160,6 @@ exports.register = async (req, res) => {
   }
 
   try {
-    // Cek apakah username sudah ada
     const checkUser = await pool.query(
       "SELECT * FROM users WHERE username = $1",
       [username],
@@ -174,11 +170,11 @@ exports.register = async (req, res) => {
         .json({ success: false, message: "Username sudah digunakan" });
     }
 
-    // Hash kata sandi baru
+    //hash sandi
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Simpan ke database
+    //simpan ke db
     const insertQuery = `
       INSERT INTO users (username, password_hash, nama, peran) 
       VALUES ($1, $2, $3, $4) RETURNING id, username, peran
@@ -204,7 +200,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// Fungsi untuk mengambil data profil diri sendiri
+//fungsi profil
 exports.getProfile = async (req, res) => {
   try {
     const dbQuery = "SELECT id, username, nama, peran FROM users WHERE id = $1";
@@ -253,7 +249,6 @@ exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { username, nama, peran, password } = req.body;
 
-  // Validasi peran
   if (peran && !["teknisi", "admin"].includes(peran)) {
     return res
       .status(400)
