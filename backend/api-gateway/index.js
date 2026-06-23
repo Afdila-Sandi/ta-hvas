@@ -7,7 +7,6 @@ app.use(cors());
 
 console.log("api gateway");
 
-//rute auth
 app.use(
   "/api/auth",
   createProxyMiddleware({
@@ -17,7 +16,6 @@ app.use(
   }),
 );
 
-//rute telemetry
 app.use(
   "/api/telemetry",
   createProxyMiddleware({
@@ -27,7 +25,6 @@ app.use(
   }),
 );
 
-//rute kontrol
 app.use(
   "/api/control",
   createProxyMiddleware({
@@ -42,14 +39,15 @@ app.use(
   }),
 );
 
-//rute ws
 app.use(
-  "/ws/telemetry",
+  "/api/ws/telemetry",
   createProxyMiddleware({ target: "http://telemetry-service:5002", ws: true }),
 );
 app.use(
-  "/ws/control",
+  "/api/ws/control",
   createProxyMiddleware({ target: "http://control-service:5003", ws: true }),
 );
 
-app.listen(5000, () => console.log("Gateway listen on 5000"));
+app.listen(5000, "0.0.0.0", () =>
+  console.log("Gateway listen on 0.0.0.0:5000"),
+);
