@@ -5,6 +5,7 @@ const baseURL = isDev ? import.meta.env.VITE_API_URL : "/api";
 
 const api = axios.create({
   baseURL: baseURL,
+  withCredentials: true, // WAJIB: Mengizinkan pengiriman dan penerimaan Cookie
   headers: {
     "Content-Type": "application/json",
   },
@@ -32,17 +33,16 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem("hvas_refresh_token");
-
-      if (!refreshToken) {
-        forceLogout("Sesi Anda telah berakhir. Silakan login kembali.");
-        return Promise.reject(error);
-      }
-
       try {
-        const res = await axios.post(`${baseURL}/auth/refresh`, {
-          refreshToken: refreshToken,
-        });
+        // PERUBAHAN: Tidak perlu mencari refresh token di localStorage.
+        // Langsung tembak endpoint refresh, Cookie akan terkirim otomatis oleh peramban.
+        const res = await axios.post(
+          `${baseURL}/auth/refresh`,
+          {},
+          {
+            withCredentials: true, // Pastikan request axios mandiri ini juga membawa cookie
+          },
+        );
 
         const newAccessToken = res.data.accessToken;
         localStorage.setItem("hvas_access_token", newAccessToken);
@@ -63,7 +63,12 @@ api.interceptors.response.use(
 );
 
 function forceLogout(pesan) {
+  // Hanya hapus access_token, refresh token diurus oleh backend
   localStorage.removeItem("hvas_access_token");
+  localStorage.removeItem("role");
+
+  // Hapus sisa-sisa kunci lama jika masih ada
+  localStorage.removeItem("hvas_jwt_token");
   localStorage.removeItem("hvas_refresh_token");
 
   if (!window.logoutAlertShown) {

@@ -2,96 +2,91 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pool = require("../config/database");
 
-// login (MODIFIKASI: DUAL TOKEN)
+// Login Endpoint
 exports.login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // Cari pengguna
     const dbQuery = "SELECT * FROM users WHERE username = $1";
     const result = await pool.query(dbQuery, [username]);
 
     if (result.rows.length === 0) {
-      return res.status(401).json({
-        success: false,
-        message: "Username tidak terdaftar",
-      });
+      return res
+        .status(401)
+        .json({ success: false, message: "Username tidak terdaftar" });
     }
 
     const user = result.rows[0];
-
-    // Verifikasi kata sandi
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Password salah",
-      });
+      return res
+        .status(401)
+        .json({ success: false, message: "Password salah" });
     }
 
-    //buat token jwt
     const SECRET_KEY = process.env.JWT_SECRET;
     const REFRESH_SECRET =
-      process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia"; 
+      process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia";
 
-    // Access Token: Umur pendek (15 menit)
+    // Access Token: 15 menit
     const accessToken = jwt.sign(
-      {
-        id: user.id,
-        username: user.username,
-        role: user.peran,
-      },
+      { id: user.id, username: user.username, role: user.peran },
       SECRET_KEY,
       { expiresIn: "15m" },
     );
 
-    // Refresh Token: Umur panjang (24 Jam)
+    // Refresh Token: 24 Jam
     const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, {
       expiresIn: "24h",
     });
 
-    //update token
-    await pool.query(
-      "UPDATE users SET refresh_token = $1 WHERE id = $2",
-      [refreshToken, user.id],
-    );
+    await pool.query("UPDATE users SET refresh_token = $1 WHERE id = $2", [
+      refreshToken,
+      user.id,
+    ]);
 
-    // Kirim respon
+    res.cookie("hvas_refresh_token", refreshToken, {
+      httpOnly: true, 
+      secure: true, 
+      sameSite: "none", 
+      maxAge: 24 * 60 * 60 * 1000, 
+    });
+
+    // Kirim respon (TANPA menyertakan refresh token di JSON)
     return res.status(200).json({
       success: true,
       message: "Otentikasi berhasil",
       accessToken: accessToken,
-      refreshToken: refreshToken,
       role: user.peran,
     });
   } catch (error) {
     console.error("Error login:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "Terjadi kesalahan pada peladen",
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan pada peladen" });
   }
 };
 
-//refresh token
+// Refresh Token Endpoint
 exports.refreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
+  // PERUBAHAN: Baca Refresh Token dari Cookie, bukan dari body
+  const refreshToken = req.cookies?.hvas_refresh_token;
 
   if (!refreshToken) {
     return res
       .status(401)
-      .json({ success: false, message: "Refresh token tidak tersedia." });
+      .json({
+        success: false,
+        message: "Sesi tidak ditemukan atau cookie hilang.",
+      });
   }
 
   try {
     const REFRESH_SECRET =
       process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia";
-
-    //verivikasi sesi
     const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
 
-    //cekdb untuk validasi sesi
     const dbQuery =
       "SELECT refresh_token, username, peran FROM users WHERE id = $1";
     const result = await pool.query(dbQuery, [decoded.id]);
@@ -104,26 +99,19 @@ exports.refreshToken = async (req, res) => {
 
     const user = result.rows[0];
 
-    //cek token di db
+    // Deteksi Single Session (Menendang perangkat lain)
     if (user.refresh_token !== refreshToken) {
-      // Jika beda tendang
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message:
-            "Sesi telah digantikan oleh perangkat lain. Silakan login kembali.",
-        });
+      res.clearCookie("hvas_refresh_token"); // Bersihkan cookie peretas/perangkat lama
+      return res.status(403).json({
+        success: false,
+        message:
+          "Sesi telah digantikan oleh perangkat lain. Silakan login kembali.",
+      });
     }
 
-    //Buat Access Token baru (15 menit)
     const SECRET_KEY = process.env.JWT_SECRET;
     const newAccessToken = jwt.sign(
-      {
-        id: decoded.id,
-        username: user.username,
-        role: user.peran,
-      },
+      { id: decoded.id, username: user.username, role: user.peran },
       SECRET_KEY,
       { expiresIn: "15m" },
     );
@@ -131,23 +119,25 @@ exports.refreshToken = async (req, res) => {
     return res.status(200).json({ success: true, accessToken: newAccessToken });
   } catch (error) {
     console.error("Error refresh token:", error.message);
-    return res
-      .status(403)
-      .json({
-        success: false,
-        message:
-          "Refresh token kedaluwarsa atau tidak valid. Silakan login ulang.",
-      });
+    res.clearCookie("hvas_refresh_token"); // Bersihkan cookie jika kedaluwarsa/rusak
+    return res.status(403).json({
+      success: false,
+      message:
+        "Refresh token kedaluwarsa atau tidak valid. Silakan login ulang.",
+    });
   }
 };
 
-//Logout Endpoint
+// Logout Endpoint
 exports.logout = async (req, res) => {
   try {
-    await pool.query(
-      "UPDATE users SET refresh_token = NULL WHERE id = $1",
-      [req.user.id],
-    );
+    await pool.query("UPDATE users SET refresh_token = NULL WHERE id = $1", [
+      req.user.id,
+    ]);
+
+    // PERUBAHAN: Perintahkan peramban untuk menghapus Cookie
+    res.clearCookie("hvas_refresh_token");
+
     return res.status(200).json({ success: true, message: "Logout berhasil." });
   } catch (error) {
     console.error("Error logout:", error.message);

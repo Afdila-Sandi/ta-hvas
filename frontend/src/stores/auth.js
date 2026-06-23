@@ -3,15 +3,13 @@ import api from "../services/api";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    // Ubah nama state menyesuaikan Dual Token
+    // Refresh Token dihapus dari state karena sekarang diurus otomatis oleh browser (Cookie)
     accessToken: localStorage.getItem("hvas_access_token") || null,
-    refreshToken: localStorage.getItem("hvas_refresh_token") || null,
     userRole: localStorage.getItem("role") || null,
     user: null,
   }),
 
   getters: {
-    // Autentikasi kini bergantung pada keberadaan access token
     isAuthenticated: (state) => !!state.accessToken,
     isAdmin: (state) => state.userRole === "admin",
     isTeknisi: (state) => state.userRole === "teknisi",
@@ -22,19 +20,17 @@ export const useAuthStore = defineStore("auth", {
       try {
         const response = await api.post("/auth/login", { username, password });
 
-        // 1. Ekstrak Dual Token dari respon backend
+        // 1. Backend sekarang HANYA mengirim access token di response body
+        // (Refresh token diam-diam sudah diselipkan backend ke dalam Cookie)
         const accessToken = response.data.accessToken;
-        const refreshToken = response.data.refreshToken;
         const role = response.data.role;
 
         // 2. Simpan ke State Pinia
         this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
         this.userRole = role;
 
-        // 3. Simpan ke Local Storage dengan kunci (key) yang tepat
+        // 3. Simpan HANYA access token & role ke Local Storage
         localStorage.setItem("hvas_access_token", accessToken);
-        localStorage.setItem("hvas_refresh_token", refreshToken);
         localStorage.setItem("role", role);
 
         return { success: true, role: role };
@@ -65,7 +61,8 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async logout() {
-      // 1. Tembak API Logout agar backend menghapus token dari database (Single Session)
+      // 1. Tembak API Logout agar backend menghapus token dari database
+      // DAN backend akan memberikan perintah untuk menghapus Cookie dari browser
       try {
         if (this.accessToken) {
           await api.post("/auth/logout");
@@ -76,17 +73,16 @@ export const useAuthStore = defineStore("auth", {
 
       // 2. Hapus state dari memori Vue
       this.accessToken = null;
-      this.refreshToken = null;
       this.userRole = null;
       this.user = null;
 
-      // 3. Bersihkan sisa token di Local Storage
+      // 3. Bersihkan sisa access token di Local Storage
       localStorage.removeItem("hvas_access_token");
-      localStorage.removeItem("hvas_refresh_token");
       localStorage.removeItem("role");
 
-      // Opsional: Hapus kunci lama agar bersih 100%
+      // Bersihkan sisa kode lama jika masih ada
       localStorage.removeItem("hvas_jwt_token");
+      localStorage.removeItem("hvas_refresh_token");
     },
   },
 });
