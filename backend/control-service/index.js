@@ -16,6 +16,6 @@ const server = http.createServer(app);
 
 initControlService(server, app);
 
-server.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, () => {
   console.log(`Control Service berjalan di http://${HOST}:${PORT}`);
 });

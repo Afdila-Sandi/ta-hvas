@@ -22,6 +22,6 @@ const wss = new WebSocket.Server({ server, path: "/ws/telemetry" });
 
 initSensorService(wss);
 
-server.listen(PORT, HOST, () => {
-    console.log(`Control Service berjalan di http://${HOST}:${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`Telemetry Service berjalan di http://${HOST}:${PORT}`);
 });

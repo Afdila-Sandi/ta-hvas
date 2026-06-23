@@ -15,6 +15,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", authRoutes);
 
-server.listen(PORT, HOST, () => {
-    console.log(`Control Service berjalan di http://${HOST}:${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`Auth Service berjalan di http://${HOST}:${PORT}`);
 });
