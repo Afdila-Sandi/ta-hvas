@@ -65,9 +65,6 @@ function forceLogout(pesan) {
   localStorage.removeItem("hvas_access_token");
   localStorage.removeItem("role");
 
-  localStorage.removeItem("hvas_jwt_token");
-  localStorage.removeItem("hvas_refresh_token");
-
   if (!window.logoutAlertShown) {
     window.logoutAlertShown = true;
     alert(pesan);

@@ -6,11 +6,11 @@ const path = require("path");
 const cookieParser = require('cookie-parser');
 const authRoutes = require("./src/routes/authRoutes");
 const app = express();
-const PORT = process.env.PORT || 5001;
-const HOST = process.env.HOST || '0.0.0.0';
+const PORT = process.env.PORT;
+const HOST = process.env.HOST;
 
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL,
     credentials: true 
 };
 app.use(cors(corsOptions));

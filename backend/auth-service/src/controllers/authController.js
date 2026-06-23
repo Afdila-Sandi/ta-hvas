@@ -26,8 +26,7 @@ exports.login = async (req, res) => {
     }
 
     const SECRET_KEY = process.env.JWT_SECRET;
-    const REFRESH_SECRET =
-      process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia";
+    const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
     //token 15 menit
     const accessToken = jwt.sign(
@@ -82,8 +81,7 @@ exports.refreshToken = async (req, res) => {
   }
 
   try {
-    const REFRESH_SECRET =
-      process.env.JWT_REFRESH_SECRET || "fallback_refresh_rahasia";
+    const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
     const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
 
     const dbQuery =

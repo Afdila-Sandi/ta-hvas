@@ -70,9 +70,6 @@ export const useAuthStore = defineStore("auth", {
 
       localStorage.removeItem("hvas_access_token");
       localStorage.removeItem("role");
-
-      localStorage.removeItem("hvas_jwt_token");
-      localStorage.removeItem("hvas_refresh_token");
     },
   },
 });

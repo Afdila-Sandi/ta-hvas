@@ -6,7 +6,7 @@ exports.initControlService = (server, app) => {
   const SECRET_KEY = process.env.JWT_SECRET;
   const MQTT_BROKER = process.env.MQTT_BROKER;
 
-  const TOKEN_ESP = process.env.TOKEN_ESP || "HVAS_Bspji_2026";
+  const TOKEN_ESP = process.env.TOKEN_ESP;
 
   const mqttClient = mqtt.connect(MQTT_BROKER, {
     rejectUnauthorized: false,
