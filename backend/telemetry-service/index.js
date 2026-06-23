@@ -9,7 +9,7 @@ const { initSensorService } = require("./src/services/logsService");
 
 const app = express();
 const PORT = process.env.PORT || 5002;
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = process.env.HOST || "0.0.0.0";
 
 app.use(cors());
 app.use(express.json());
@@ -18,10 +18,10 @@ app.use("/", logsRoutes);
 
 const server = http.createServer(app);
 
-const wss = new WebSocket.Server({ server, path: "/ws/telemetry" });
+const wss = new WebSocket.Server({ server, path: "/api/ws/telemetry" });
 
 initSensorService(wss);
 
 server.listen(PORT, HOST, () => {
-    console.log(`Telemetry Service berjalan di http://${HOST}:${PORT}`);
+  console.log(`Telemetry Service berjalan di http://${HOST}:${PORT}`);
 });
