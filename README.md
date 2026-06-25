@@ -4,17 +4,17 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
 
 ## Tech Stack
 
-| Komponen | Teknologi |
-|---|---|
-| Backend | Node.js, Express.js |
-| Frontend | Vue 3, Vite, Tailwind CSS, Pinia |
-| Database | PostgreSQL 15 |
-| Message Broker | Eclipse Mosquitto (MQTT) |
-| Realtime | WebSocket (ws) |
-| Auth | JWT (Access + Refresh Token) |
-| Encryption | SSL/TLS (Nginx + Mosquitto) |
-| Container | Docker Compose |
-| IoT | ESP32, BME280, DHT22 |
+| Komponen       | Teknologi                        |
+| -------------- | -------------------------------- |
+| Backend        | Node.js, Express.js              |
+| Frontend       | Vue 3, Vite, Tailwind CSS, Pinia |
+| Database       | PostgreSQL 15                    |
+| Message Broker | Eclipse Mosquitto (MQTT)         |
+| Realtime       | WebSocket (ws)                   |
+| Auth           | JWT (Access + Refresh Token)     |
+| Encryption     | SSL/TLS (Nginx + Mosquitto)      |
+| Container      | Docker Compose                   |
+| IoT            | ESP32, BME280, DHT22             |
 
 ## Arsitektur
 
@@ -25,19 +25,24 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
                     │                     │                     │
               [Auth Service:5001]  [Telemetry:5002]   [Control:5003]
                     │                     │                     │
-              [PostgreSQL]          [PostgreSQL]          [MQTT Client]
-                                      [Mosquitto:8000] ◀─────────────▶ [ESP32]
+                    │                     │─────────────────────│                    │
+               [PostgreSQL]          [PostgreSQL]               │
+                [db_auth]           [db_telemetry]              │
+                                                          [MQTT Client]
+                                                         [Mosquitto:8000] ◀─────────────▶ [ESP32]
 ```
 
 ## Fitur
 
 ### Admin
+
 - Dashboard analitik real-time (suhu, kelembaban, tekanan udara)
 - Manajemen akun teknisi (CRUD)
 - Laporan audit 24 jam (export ke CSV/Excel)
 - Profil administrator
 
 ### Teknisi
+
 - Kontrol pompa sampling (Manual / Auto Cycle)
 - Kontrol kipas panel (Auto / Manual)
 - Monitor sensor real-time via WebSocket
@@ -45,6 +50,7 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
 - Pengaturan profil
 
 ### Keamanan
+
 - SSL/TLS untuk semua komunikasi (HTTPS + MQTTS)
 - JWT Access Token (15 menit) + Refresh Token (24 jam, httpOnly cookie)
 - Single session — login di perangkat lain menggantikan sesi lama
@@ -150,45 +156,50 @@ cd frontend && npm install && npm run dev
 
 ### API Endpoints
 
-| Method | Endpoint | Auth | Deskripsi |
-|---|---|---|---|
-| POST | `/api/auth/login` | No | Login |
-| POST | `/api/auth/refresh` | Cookie | Refresh token |
-| POST | `/api/auth/logout` | Bearer | Logout |
-| GET | `/api/auth/profile` | Bearer | Profil user |
-| PUT | `/api/auth/profile` | Bearer | Update profil |
-| POST | `/api/auth/register` | Admin | Tambah user |
-| GET | `/api/auth/users` | Admin | List users |
-| PUT | `/api/auth/users/:id` | Admin | Update user |
-| DELETE | `/api/auth/users/:id` | Admin | Hapus user |
-| GET | `/api/telemetry/logs` | No | Data sensor (500 terakhir) |
-| POST | `/api/control` | Teknisi | Kontrol pompa/kipas |
+| Method | Endpoint              | Auth    | Deskripsi                  |
+| ------ | --------------------- | ------- | -------------------------- |
+| POST   | `/api/auth/login`     | No      | Login                      |
+| POST   | `/api/auth/refresh`   | Cookie  | Refresh token              |
+| POST   | `/api/auth/logout`    | Bearer  | Logout                     |
+| GET    | `/api/auth/profile`   | Bearer  | Profil user                |
+| PUT    | `/api/auth/profile`   | Bearer  | Update profil              |
+| POST   | `/api/auth/register`  | Admin   | Tambah user                |
+| GET    | `/api/auth/users`     | Admin   | List users                 |
+| PUT    | `/api/auth/users/:id` | Admin   | Update user                |
+| DELETE | `/api/auth/users/:id` | Admin   | Hapus user                 |
+| GET    | `/api/telemetry/logs` | No      | Data sensor (500 terakhir) |
+| POST   | `/api/control`        | Teknisi | Kontrol pompa/kipas        |
 
 ### MQTT Topics
 
-| Topic | Direction | Deskripsi |
-|---|---|---|
-| `esp/data/{TOKEN_ESP}` | ESP → Server | Data sensor (suhu, kelembaban, tekanan) |
+| Topic                     | Direction    | Deskripsi                                      |
+| ------------------------- | ------------ | ---------------------------------------------- |
+| `esp/data/{TOKEN_ESP}`    | ESP → Server | Data sensor (suhu, kelembaban, tekanan)        |
 | `esp/control/{TOKEN_ESP}` | Server → ESP | Perintah kontrol (ON/OFF/CYCLE/SET_MODE_KIPAS) |
 
 ## Sensor & Hardware
 
-| Sensor | Fungsi | Pin |
-|---|---|---|
-| BME280 | Suhu dalam, kelembaban dalam, tekanan udara | I2C |
-| DHT22 | Suhu luar, kelembaban luar | Digital |
-| Relay Pompa | Kontrol motor sampling | GPIO |
-| Relay Kipas | Kontrol kipas pendingin panel | GPIO |
+| Komponen         | Fungsi                                      | Pin ESP32          |
+| ---------------- | ------------------------------------------- | ------------------ |
+| BME280           | Suhu dalam, kelembaban dalam, tekanan udara | SDA (21), SCL (22) |
+| DS3231           | RTC (Real-Time Clock)                       | SDA (21), SCL (22) |
+| DHT22            | Suhu luar, kelembaban luar                  | GPIO 4             |
+| SSR Relay 40A #1 | Motor pompa sampling 1 (0s hidup)           | GPIO 19            |
+| SSR Relay 40A #2 | Motor pompa sampling 2 (3s setelah #1)      | GPIO 18            |
+| SSR Relay 40A #3 | Motor pompa sampling 3 (6s setelah #1)      | GPIO 26            |
+| Relay 5V         | Kipas pendingin panel                       | GPIO 27            |
+
+> **Catatan Inrush Current:** Ketiga relay pompa diaktifkan secara berurutan dengan jeda 3 detik (0s → 3s → 6s) untuk mengatasi lonjakan arus awal (inrush current) pada motor induktif. Semua relay pompa menggunakan SSR 40A.
 
 ## Troubleshooting
 
-| Masalah | Solusi |
-|---|---|
-| `docker compose up` gagal | Pastikan `hvas.crt` dan `hvas.key` ada di `backend/certs/` |
-| Frontend tidak bisa connect API | Cek `FRONTEND_URL` di `api-gateway/.env` |
-| WebSocket terputus terus | Pastikan Mosquitto running: `docker logs hvas-mqtt` |
-| Data sensor tidak muncul | Cek `TOKEN_ESP` sama di `.env` dan ESP32 |
-| Login gagal | Cek `JWT_SECRET` di `auth-service/.env` |
+| Masalah                         | Solusi                                                     |
+| ------------------------------- | ---------------------------------------------------------- |
+| `docker compose up` gagal       | Pastikan `hvas.crt` dan `hvas.key` ada di `backend/certs/` |
+| Frontend tidak bisa connect API | Cek `FRONTEND_URL` di `api-gateway/.env`                   |
+| WebSocket terputus terus        | Pastikan Mosquitto running: `docker logs hvas-mqtt`        |
+| Data sensor tidak muncul        | Cek `TOKEN_ESP` sama di `.env` dan ESP32                   |
+| Login gagal                     | Cek `JWT_SECRET` di `auth-service/.env`                    |
 
 ## License
 
