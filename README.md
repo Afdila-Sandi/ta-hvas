@@ -1,4 +1,4 @@
-# HVAS — Hulu Verifikasi Alat Sampling
+# HVAS — Alat Sampling Udara
 
 Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan Enkripsi SSL/TLS dan Autentikasi JWT.
 
