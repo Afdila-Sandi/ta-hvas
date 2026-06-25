@@ -145,7 +145,7 @@ const fetchData = async () => {
     daftarTeknisi.value = usersRes.data;
   } catch (error) {
     console.error("Gagal mengambil data:", error);
-    if (error.response?.status === 401) handleLogout();
+    if (error.response?.status === 401) prosesLogoutAdmin();
   }
 };
 
