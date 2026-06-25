@@ -25,7 +25,7 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
                     │                     │                     │
               [Auth Service:5001]  [Telemetry:5002]   [Control:5003]
                     │                     │                     │
-                    │                     │─────────────────────│                    │
+                    │                     │─────────────────────│                    
                [PostgreSQL]          [PostgreSQL]               │
                 [db_auth]           [db_telemetry]              │
                                                           [MQTT Client]
@@ -60,13 +60,13 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
 
 ```
 ta-hvas/
+├── docker-compose.yml
 ├── backend/
 │   ├── api-gateway/          # Reverse proxy (Express + http-proxy-middleware)
 │   ├── auth-service/         # Autentikasi & manajemen user
 │   ├── telemetry-service/    # Terima data sensor via MQTT, simpan ke DB
 │   ├── control-service/      # Kirim perintah ke ESP32 via MQTT
 │   ├── certs/                # Sertifikat SSL/TLS
-│   ├── docker-compose.yml
 │   ├── nginx.conf
 │   └── mosquitto.conf
 ├── frontend/
@@ -123,7 +123,6 @@ npm run build
 ### 4. Jalankan dengan Docker
 
 ```bash
-cd backend
 docker compose up -d --build
 ```
 
@@ -195,7 +194,7 @@ cd frontend && npm install && npm run dev
 
 | Masalah                         | Solusi                                                     |
 | ------------------------------- | ---------------------------------------------------------- |
-| `docker compose up` gagal       | Pastikan `hvas.crt` dan `hvas.key` ada di `backend/certs/` |
+| `docker compose up` gagal | Pastikan `hvas.crt` dan `hvas.key` ada di `backend/certs/` dan `frontend/dist` sudah di-build |
 | Frontend tidak bisa connect API | Cek `FRONTEND_URL` di `api-gateway/.env`                   |
 | WebSocket terputus terus        | Pastikan Mosquitto running: `docker logs hvas-mqtt`        |
 | Data sensor tidak muncul        | Cek `TOKEN_ESP` sama di `.env` dan ESP32                   |

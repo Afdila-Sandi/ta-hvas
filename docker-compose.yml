@@ -11,9 +11,9 @@ services:
     ports:
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs:ro
-      - ../frontend/dist:/usr/share/nginx/html:ro
+      - ./backend/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/certs:/etc/nginx/certs:ro
+      - ./frontend/dist:/usr/share/nginx/html:ro
     networks:
       - hvas-net
 
@@ -25,8 +25,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./certs:/mosquitto/config/certs:ro
+      - ./backend/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./backend/certs:/mosquitto/config/certs:ro
     networks:
       - hvas-net
 
@@ -36,10 +36,10 @@ services:
     container_name: hvas-db_auth
     restart: always
     env_file:
-      - ./auth-service/.env
+      - ./backend/auth-service/.env
     volumes:
       - pgdata_auth:/var/lib/postgresql/data
-      - ./auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./backend/auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - hvas-net
 
@@ -48,20 +48,20 @@ services:
     container_name: hvas-db_telemetry
     restart: always
     env_file:
-      - ./telemetry-service/.env
+      - ./backend/telemetry-service/.env
     volumes:
       - pgdata_telemetry:/var/lib/postgresql/data
-      - ./telemetry-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./backend/telemetry-service/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - hvas-net
 
   #auth-service
   auth-service:
-    build: ./auth-service
+    build: ./backend/auth-service
     container_name: hvas-auth
     restart: always
     env_file:
-      - ./auth-service/.env
+      - ./backend/auth-service/.env
     depends_on:
       - postgres-auth
     networks:
@@ -69,11 +69,11 @@ services:
 
   #telemetry-service
   telemetry-service:
-    build: ./telemetry-service
+    build: ./backend/telemetry-service
     container_name: hvas-telemetry
     restart: always
     env_file:
-      - ./telemetry-service/.env
+      - ./backend/telemetry-service/.env
     depends_on:
       - postgres-telemetry
       - mosquitto
@@ -82,11 +82,11 @@ services:
 
   #control-service
   control-service:
-    build: ./control-service
+    build: ./backend/control-service
     container_name: hvas-control
     restart: always
     env_file:
-      - ./control-service/.env
+      - ./backend/control-service/.env
     depends_on:
       - mosquitto
     networks:
@@ -94,7 +94,7 @@ services:
 
   #api-gateway
   api-gateway:
-    build: ./api-gateway
+    build: ./backend/api-gateway
     container_name: hvas-api-gateway
     restart: always
     expose:
