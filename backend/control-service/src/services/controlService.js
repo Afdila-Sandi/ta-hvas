@@ -10,6 +10,9 @@ exports.initControlService = (server, app) => {
 
   const mqttClient = mqtt.connect(MQTT_BROKER, {
     rejectUnauthorized: false,
+    reconnectPeriod: 5000,
+    connectTimeout: 10000,
+    keepalive: 60,
   });
 
   const wss = new WebSocket.Server({ server, path: "/api/ws/control" });
@@ -49,6 +52,7 @@ exports.initControlService = (server, app) => {
         });
       }
     } catch (err) {
+      console.error("[CONTROL] Gagal parse pesan MQTT:", err.message);
     }
   });
 
@@ -110,8 +114,22 @@ exports.initControlService = (server, app) => {
       });
     });
   }
+  
+  const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (ws.isAlive === false) return ws.terminate();
+      ws.isAlive = false;
+      ws.ping();
+    });
+  }, 30000);
 
   wss.on("connection", (ws) => {
+    ws.isAlive = true;
+    ws.on("pong", () => {
+      ws.isAlive = true;
+    });
     ws.send(JSON.stringify({ ...latestStatus, type: "initial_status" }));
   });
+
+  wss.on("close", () => clearInterval(interval));
 };

@@ -11,6 +11,7 @@ const HOST = process.env.HOST;
 app.use(express.json());
 
 const server = http.createServer(app);
+const controlWss = require("ws").Server;
 
 initControlService(server, app);
 

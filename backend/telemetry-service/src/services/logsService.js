@@ -7,6 +7,9 @@ exports.initSensorService = (wss) => {
 
   const mqttClient = mqtt.connect(MQTT_BROKER, {
     rejectUnauthorized: false,
+    reconnectPeriod: 5000,
+    connectTimeout: 10000,
+    keepalive: 60,
   });
 
   let latestSensorData = null;
@@ -90,6 +93,9 @@ exports.initSensorService = (wss) => {
           latestSensorData.kebisingan,
         ];
         await client.query(query, values);
+        await client.query(
+          "DELETE FROM logs WHERE waktu < NOW() - INTERVAL '30 days'",
+        );
         console.log("Data sampling berhasil disimpan ke basis data");
       } catch (err) {
         console.error("Gagal menyimpan data ke basis data:", err.message);
