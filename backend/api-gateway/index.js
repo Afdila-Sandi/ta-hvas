@@ -46,16 +46,31 @@ app.use(
   }),
 );
 
-app.use(
-  "/api/ws/telemetry",
-  createProxyMiddleware({ target: "http://telemetry-service:5002" }),
-);
-app.use(
-  "/api/ws/control",
-  createProxyMiddleware({ target: "http://control-service:5003" }),
-);
+const wsTelemetryProxy = createProxyMiddleware({
+  target: "http://telemetry-service:5002",
+  changeOrigin: true,
+  ws: true,
+});
+
+const wsControlProxy = createProxyMiddleware({
+  target: "http://control-service:5003",
+  changeOrigin: true,
+  ws: true,
+});
+
+app.use("/api/ws/telemetry", wsTelemetryProxy);
+app.use("/api/ws/control", wsControlProxy);
 
 const server = http.createServer(app);
+
+server.on("upgrade", (req, socket, head) => {
+  if (req.url.startsWith("/api/ws/telemetry")) {
+    wsTelemetryProxy.upgrade(req, socket, head);
+  } else if (req.url.startsWith("/api/ws/control")) {
+    wsControlProxy.upgrade(req, socket, head);
+  }
+});
+
 server.listen(5000, "0.0.0.0", () =>
   console.log("Gateway listen on 0.0.0.0:5000"),
 );

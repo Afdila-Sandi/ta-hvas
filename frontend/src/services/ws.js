@@ -15,8 +15,8 @@ export const sensorData = ref({
   sisa_waktu: 0,
   cycle_phase: null,
 
-  suhu_esp: 0.0,            
-  status_kipas: "OFF",      
+  suhu_esp: 0.0,
+  status_kipas: "OFF",
   mode_kipas: "AUTO",
 });
 
@@ -30,7 +30,7 @@ export function initWebSocket() {
 
   function connectTelemetry() {
     const wsTelemetryURL = isDev
-      ? `${import.meta.env.VITE_WS_URL}/telemetry`
+      ? `${import.meta.env.VITE_WS_URL}/api/ws/telemetry`
       : `${protocol}${host}/api/ws/telemetry`;
 
     wsTelemetry = new WebSocket(wsTelemetryURL);
@@ -52,7 +52,7 @@ export function initWebSocket() {
           sensorData.value.kelembaban_dht = data.kelembaban_dht;
           sensorData.value.kebisingan = data.kebisingan;
 
-          sensorData.value.suhu_esp = data.suhu_esp;      
+          sensorData.value.suhu_esp = data.suhu_esp;
           sensorData.value.status_kipas = data.status_kipas;
           sensorData.value.mode_kipas = data.mode_kipas;
 
@@ -82,7 +82,7 @@ export function initWebSocket() {
 
   function connectControl() {
     const wsControlURL = isDev
-      ? `${import.meta.env.VITE_WS_URL}/control`
+      ? `${import.meta.env.VITE_WS_URL}/api/ws/control`
       : `${protocol}${host}/api/ws/control`;
 
     wsControl = new WebSocket(wsControlURL);
