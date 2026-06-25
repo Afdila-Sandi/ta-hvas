@@ -31,7 +31,7 @@ export function initWebSocket() {
   function connectTelemetry() {
     const wsTelemetryURL = isDev
       ? `${import.meta.env.VITE_WS_URL}/telemetry`
-      : `${protocol}${host}/ws/telemetry`;
+      : `${protocol}${host}/api/ws/telemetry`;
 
     wsTelemetry = new WebSocket(wsTelemetryURL);
 
@@ -83,7 +83,7 @@ export function initWebSocket() {
   function connectControl() {
     const wsControlURL = isDev
       ? `${import.meta.env.VITE_WS_URL}/control`
-      : `${protocol}${host}/ws/control`;
+      : `${protocol}${host}/api/ws/control`;
 
     wsControl = new WebSocket(wsControlURL);
 

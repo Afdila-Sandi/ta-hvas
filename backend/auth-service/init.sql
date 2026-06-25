@@ -8,10 +8,10 @@ CREATE TABLE IF NOT EXISTS users (
     refresh_token TEXT DEFAULT NULL
 );
 
-INSERT INTO users (username, password_hash, nama, peran) 
+INSERT INTO users (username, password_hash, nama, peran)
 VALUES (
-    'teknisi_bspji', 
-    '$2b$10$03jCx2qCGy973Cg05O02cOAu/wenm1LIG1AZ3vM/DZlufXEw77Xo2', 
-    'Admin BSPJI', 
+    'admin', 
+    '$2b$10$M0gyKlb8zgfPk3OAeriw/ORJ5LR71iZv1sPHty3TXIHh3XqEpZsWS', 
+    'Admin', 
     'admin'
 ) ON CONFLICT (username) DO NOTHING;

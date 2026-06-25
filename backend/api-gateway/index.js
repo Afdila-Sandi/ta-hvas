@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const http = require("http");
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
@@ -47,13 +48,14 @@ app.use(
 
 app.use(
   "/api/ws/telemetry",
-  createProxyMiddleware({ target: "http://telemetry-service:5002", ws: true }),
+  createProxyMiddleware({ target: "http://telemetry-service:5002" }),
 );
 app.use(
   "/api/ws/control",
-  createProxyMiddleware({ target: "http://control-service:5003", ws: true }),
+  createProxyMiddleware({ target: "http://control-service:5003" }),
 );
 
-app.listen(5000, "0.0.0.0", () =>
+const server = http.createServer(app);
+server.listen(5000, "0.0.0.0", () =>
   console.log("Gateway listen on 0.0.0.0:5000"),
 );
