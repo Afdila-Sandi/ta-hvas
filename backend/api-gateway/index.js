@@ -8,7 +8,8 @@ const cors = require("cors");
 const app = express();
 const corsOptions = {
     origin: process.env.FRONTEND_URL,
-    credentials: true 
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
 };
 app.use(cors(corsOptions));
 
