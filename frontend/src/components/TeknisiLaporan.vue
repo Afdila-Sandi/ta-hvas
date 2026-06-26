@@ -68,34 +68,36 @@
               class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
             />
           </div>
-          <div class="grid grid-cols-[1fr_auto_auto] gap-2 items-end">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Jam</label>
-              <select
-                v-model="form.jam_mulai"
-                required
-                class="w-full px-2 py-1.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-xs bg-slate-50"
-              >
-                <option value="">--</option>
-                <option v-for="j in 24" :key="j-1" :value="String(j-1).padStart(2,'0')">
-                  {{ String(j-1).padStart(2,'0') }}
-                </option>
-              </select>
-            </div>
-            <span class="text-sm font-bold text-slate-400 pb-1.5">:</span>
-            <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Menit</label>
-              <select
-                v-model="form.menit_mulai"
-                required
-                class="w-full px-2 py-1.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-xs bg-slate-50"
-              >
-                <option value="">--</option>
-                <option v-for="m in [0,5,10,15,20,25,30,35,40,45,50,55]" :key="m" :value="String(m).padStart(2,'0')">
-                  {{ String(m).padStart(2,'0') }}
-                </option>
-              </select>
-            </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1"
+              >Jam Mulai</label
+            >
+            <input
+              :value="form.jam_mulai ? form.jam_mulai + ':00 WIB' : ''"
+              readonly
+              required
+              placeholder="Pilih jam di bawah"
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 text-slate-700 font-semibold"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div class="grid grid-cols-6 gap-1.5">
+            <button
+              v-for="h in 24"
+              :key="h-1"
+              type="button"
+              @click="form.jam_mulai = String(h-1).padStart(2, '0')"
+              :class="
+                form.jam_mulai === String(h-1).padStart(2, '0')
+                  ? 'bg-emerald-500 text-white shadow-md'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              "
+              class="py-2 rounded-lg text-xs font-bold transition-all active:scale-95"
+            >
+              {{ String(h-1).padStart(2, '0') }}
+            </button>
           </div>
         </div>
 
@@ -139,7 +141,10 @@
                 {{ sesi.perusahaan }}
               </p>
               <p class="text-xs text-slate-500">
-                {{ sesi.tempat_sampling }} &middot; {{ sesi.parameter_uji }}
+                {{ sesi.tempat_sampling }}
+              </p>
+              <p class="text-xs text-slate-500">
+                {{ sesi.parameter_uji }}
               </p>
               <p class="text-[10px] text-slate-400">
                 {{ formatTanggal(sesi.waktu_mulai) }}
@@ -175,8 +180,11 @@
           <h2 class="text-sm font-bold text-slate-800">
             {{ sesiAktif.perusahaan }}
           </h2>
+          <p class="text-xs text-slate-500">
+            {{ sesiAktif.tempat_sampling }}
+          </p>
           <p class="text-[10px] text-slate-400">
-            {{ sesiAktif.tempat_sampling }} &middot; {{ sesiAktif.parameter_uji }}
+            {{ sesiAktif.parameter_uji }}
           </p>
         </div>
         <button
@@ -283,7 +291,6 @@ const form = reactive({
   perusahaan: "",
   tanggal_mulai: "",
   jam_mulai: "",
-  menit_mulai: "",
 });
 
 const ambilDaftarSesi = async () => {
@@ -302,7 +309,7 @@ const buatSesiSampling = async () => {
       tempat_sampling: form.tempat_sampling,
       parameter_uji: form.parameter_uji,
       perusahaan: form.perusahaan,
-      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:${form.menit_mulai}:00+07:00`,
+      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00:00+07:00`,
     };
     await api.post("/telemetry/sampling", payload);
     form.tempat_sampling = "";
@@ -310,7 +317,6 @@ const buatSesiSampling = async () => {
     form.perusahaan = "";
     form.tanggal_mulai = "";
     form.jam_mulai = "";
-    form.menit_mulai = "";
     await ambilDaftarSesi();
   } catch (error) {
     alert(error.response?.data?.message || "Gagal membuat sesi sampling");

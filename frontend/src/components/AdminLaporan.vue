@@ -52,17 +52,17 @@
               <th
                 class="px-5 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b"
               >
-                Teknisi
-              </th>
-              <th
-                class="px-5 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b"
-              >
                 Tempat
               </th>
               <th
                 class="px-5 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b"
               >
                 Parameter
+              </th>
+              <th
+                class="px-5 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b"
+              >
+                Teknisi
               </th>
               <th
                 class="px-5 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b"
@@ -88,13 +88,13 @@
                 {{ sesi.perusahaan }}
               </td>
               <td class="px-5 py-3 text-sm text-slate-600">
-                {{ sesi.nama_teknisi }}
-              </td>
-              <td class="px-5 py-3 text-sm text-slate-600">
                 {{ sesi.tempat_sampling }}
               </td>
               <td class="px-5 py-3 text-sm text-slate-500">
                 {{ sesi.parameter_uji }}
+              </td>
+              <td class="px-5 py-3 text-sm text-slate-600">
+                {{ sesi.nama_teknisi }}
               </td>
               <td class="px-5 py-3 text-xs text-slate-500 whitespace-nowrap">
                 {{ formatTanggal(sesi.waktu_mulai) }}
