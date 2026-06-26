@@ -18,18 +18,23 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
 
 ## Arsitektur
 
-```
-[Browser] ──HTTPS──▶ [Nginx:443] ──▶ [API Gateway:5000]
-                                          │
-                    ┌─────────────────────┼─────────────────────┐
-                    │                     │                     │
-              [Auth Service:5001]  [Telemetry:5002]   [Control:5003]
-                    │                     │                     │
-                    │                     │─────────────────────│                    
-               [PostgreSQL]          [PostgreSQL]               │
-                [db_auth]           [db_telemetry]              │
-                                                          [MQTT Client]
-                                                         [Mosquitto:8000] ◀─────────────▶ [ESP32]
+```mermaid
+graph TD
+    Browser -->|HTTPS| Nginx["nginx:443"]
+    Nginx --> Gateway["api-gateway:5000"]
+
+    Gateway -->|/api/auth/*| Auth["auth-service:5001"]
+    Gateway -->|/api/telemetry/*| Telemetry["telemetry-service:5002"]
+    Gateway -->|/api/control| Control["control-service:5003"]
+    Gateway -->|/api/ws/telemetry| Telemetry
+    Gateway -->|/api/ws/control| Control
+
+    Auth --> DB1[("db_auth<br/>users")]
+    Telemetry --> DB2[("db_telemetry<br/>logs<br/>sampling")]
+
+    Telemetry --> MQTT["Mosquitto:8000"]
+    Control --> MQTT
+    MQTT <--> ESP32["ESP32<br/>BME280 + DHT22<br/>Pompa + Kipas"]
 ```
 
 ## Fitur
@@ -38,7 +43,7 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
 
 - Dashboard analitik real-time (suhu, kelembaban, tekanan udara)
 - Manajemen akun teknisi (CRUD)
-- Laporan audit 24 jam (export ke CSV/Excel)
+- Laporan audit — daftar semua sesi sampling dengan search & filter tanggal (export ke CSV/Excel)
 - Profil administrator
 
 ### Teknisi
@@ -47,6 +52,7 @@ Sistem Monitoring & Kontrol Alat Sampling Lab Udara Berbasis Microservice dengan
 - Kontrol kipas panel (Auto / Manual)
 - Monitor sensor real-time via WebSocket
 - Riwayat data & grafik tren 1 jam terakhir
+- Laporan Sampling — buat sesi sampling, lihat data 24 jam, export ke Excel
 - Pengaturan profil
 
 ### Keamanan
@@ -65,6 +71,13 @@ ta-hvas/
 │   ├── api-gateway/          # Reverse proxy (Express + http-proxy-middleware)
 │   ├── auth-service/         # Autentikasi & manajemen user
 │   ├── telemetry-service/    # Terima data sensor via MQTT, simpan ke DB
+│   │   ├── src/
+│   │   │   ├── controllers/  # logsController, samplingController
+│   │   │   ├── middlewares/  # authMiddleware (JWT verification)
+│   │   │   ├── routes/       # logsRoutes, samplingRoutes
+│   │   │   ├── services/     # logsService (MQTT + DB writer)
+│   │   │   └── config/       # database.js
+│   │   └── init.sql          # Schema: logs, sampling
 │   ├── control-service/      # Kirim perintah ke ESP32 via MQTT
 │   ├── certs/                # Sertifikat SSL/TLS
 │   ├── nginx.conf
@@ -155,19 +168,22 @@ cd frontend && npm install && npm run dev
 
 ### API Endpoints
 
-| Method | Endpoint              | Auth    | Deskripsi                  |
-| ------ | --------------------- | ------- | -------------------------- |
-| POST   | `/api/auth/login`     | No      | Login                      |
-| POST   | `/api/auth/refresh`   | Cookie  | Refresh token              |
-| POST   | `/api/auth/logout`    | Bearer  | Logout                     |
-| GET    | `/api/auth/profile`   | Bearer  | Profil user                |
-| PUT    | `/api/auth/profile`   | Bearer  | Update profil              |
-| POST   | `/api/auth/register`  | Admin   | Tambah user                |
-| GET    | `/api/auth/users`     | Admin   | List users                 |
-| PUT    | `/api/auth/users/:id` | Admin   | Update user                |
-| DELETE | `/api/auth/users/:id` | Admin   | Hapus user                 |
-| GET    | `/api/telemetry/logs` | No      | Data sensor (500 terakhir) |
-| POST   | `/api/control`        | Teknisi | Kontrol pompa/kipas        |
+| Method | Endpoint                      | Auth    | Deskripsi                  |
+| ------ | ----------------------------- | ------- | -------------------------- |
+| POST   | `/api/auth/login`             | No      | Login                      |
+| POST   | `/api/auth/refresh`           | Cookie  | Refresh token              |
+| POST   | `/api/auth/logout`            | Bearer  | Logout                     |
+| GET    | `/api/auth/profile`           | Bearer  | Profil user                |
+| PUT    | `/api/auth/profile`           | Bearer  | Update profil              |
+| POST   | `/api/auth/register`          | Admin   | Tambah user                |
+| GET    | `/api/auth/users`             | Admin   | List users                 |
+| PUT    | `/api/auth/users/:id`         | Admin   | Update user                |
+| DELETE | `/api/auth/users/:id`         | Admin   | Hapus user                 |
+| GET    | `/api/telemetry/logs`         | No      | Data sensor (500 terakhir) |
+| GET    | `/api/telemetry/sampling`     | Bearer  | Daftar sesi sampling       |
+| POST   | `/api/telemetry/sampling`     | Bearer  | Buat sesi sampling baru    |
+| DELETE | `/api/telemetry/sampling/:id` | Bearer  | Hapus sesi sampling        |
+| POST   | `/api/control`                | Teknisi | Kontrol pompa/kipas        |
 
 ### MQTT Topics
 
@@ -199,6 +215,7 @@ cd frontend && npm install && npm run dev
 | WebSocket terputus terus        | Pastikan Mosquitto running: `docker logs hvas-mqtt`        |
 | Data sensor tidak muncul        | Cek `TOKEN_ESP` sama di `.env` dan ESP32                   |
 | Login gagal                     | Cek `JWT_SECRET` di `auth-service/.env`                    |
+| Tabel `sampling` tidak ada      | Jalankan SQL manual atau hapus volume `pgdata_telemetry` lalu restart |
 
 ## License
 
