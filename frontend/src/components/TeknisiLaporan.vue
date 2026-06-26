@@ -56,16 +56,29 @@
           />
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1"
-            >Waktu Mulai Sampling</label
-          >
-          <input
-            v-model="form.waktu_mulai"
-            type="datetime-local"
-            required
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-          />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1"
+              >Tanggal Mulai</label
+            >
+            <input
+              v-model="form.tanggal_mulai"
+              type="date"
+              required
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1"
+              >Jam Mulai</label
+            >
+            <input
+              v-model="form.jam_mulai"
+              type="time"
+              required
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+            />
+          </div>
         </div>
 
         <button
@@ -186,6 +199,11 @@
               >
                 Suhu Luar (°C)
               </th>
+              <th
+                class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
+              >
+                Lembab Luar (%)
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -209,10 +227,13 @@
               <td class="px-4 py-3 text-xs text-slate-600 text-center">
                 {{ row.suhu_dht }}
               </td>
+              <td class="px-4 py-3 text-xs text-slate-600 text-center">
+                {{ row.kelembaban_dht }}
+              </td>
             </tr>
             <tr v-if="data24Jam.length === 0 && !sedangMemuatData">
               <td
-                colspan="5"
+                colspan="6"
                 class="px-6 py-12 text-center text-slate-400 text-sm"
               >
                 <i
@@ -242,7 +263,8 @@ const form = reactive({
   tempat_sampling: "",
   parameter_uji: "Kualitas Udara Ambien",
   perusahaan: "",
-  waktu_mulai: "",
+  tanggal_mulai: "",
+  jam_mulai: "",
 });
 
 const ambilDaftarSesi = async () => {
@@ -257,11 +279,18 @@ const ambilDaftarSesi = async () => {
 const buatSesiSampling = async () => {
   sedangMembuat.value = true;
   try {
-    await api.post("/telemetry/sampling", form);
+    const payload = {
+      tempat_sampling: form.tempat_sampling,
+      parameter_uji: form.parameter_uji,
+      perusahaan: form.perusahaan,
+      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00`,
+    };
+    await api.post("/telemetry/sampling", payload);
     form.tempat_sampling = "";
     form.parameter_uji = "Kualitas Udara Ambien";
     form.perusahaan = "";
-    form.waktu_mulai = "";
+    form.tanggal_mulai = "";
+    form.jam_mulai = "";
     await ambilDaftarSesi();
   } catch (error) {
     alert(error.response?.data?.message || "Gagal membuat sesi sampling");
@@ -310,6 +339,7 @@ const lihatData = async (sesi) => {
           suhu_bme: avg(dataDiSlot, "suhu_bme"),
           kelembaban_bme: avg(dataDiSlot, "kelembaban_bme"),
           suhu_dht: avg(dataDiSlot, "suhu_dht"),
+          kelembaban_dht: avg(dataDiSlot, "kelembaban_dht"),
         });
       } else {
         hitunganPerJam.push({
@@ -317,6 +347,7 @@ const lihatData = async (sesi) => {
           suhu_bme: "-",
           kelembaban_bme: "-",
           suhu_dht: "-",
+          kelembaban_dht: "-",
         });
       }
     }
@@ -383,13 +414,14 @@ const unduhLaporanExcel = () => {
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
   csv += `Tempat Sampling            ;: ${s.tempat_sampling}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatTgl(tglMulaiObj)} s.d ${formatTgl(tglSelesaiObj)}\n\n`;
-  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (°C);Kelembaban Ruang Box (%);Suhu Lingkungan (°C)\n";
+  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (°C);Kelembaban Ruang Box (%);Suhu Lingkungan (°C);Kelembaban Lingkungan (%)\n";
 
   data24Jam.value.forEach((row, i) => {
     const suhuBme = row.suhu_bme !== "-" ? row.suhu_bme.replace(".", ",") : "-";
     const lembabBme = row.kelembaban_bme !== "-" ? row.kelembaban_bme.replace(".", ",") : "-";
     const suhuDht = row.suhu_dht !== "-" ? row.suhu_dht.replace(".", ",") : "-";
-    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht}\n`;
+    const lembabDht = row.kelembaban_dht !== "-" ? row.kelembaban_dht.replace(".", ",") : "-";
+    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht};${lembabDht}\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

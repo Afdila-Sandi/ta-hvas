@@ -179,6 +179,11 @@
               >
                 Suhu Luar (&deg;C)
               </th>
+              <th
+                class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
+              >
+                Lembab Luar (%)
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -202,10 +207,13 @@
               <td class="px-4 py-3 text-xs text-slate-600 text-center">
                 {{ row.suhu_dht }}
               </td>
+              <td class="px-4 py-3 text-xs text-slate-600 text-center">
+                {{ row.kelembaban_dht }}
+              </td>
             </tr>
             <tr v-if="data24Jam.length === 0">
               <td
-                colspan="5"
+                colspan="6"
                 class="px-6 py-12 text-center text-slate-400 text-sm"
               >
                 <i
@@ -307,6 +315,7 @@ const lihatData = async (sesi) => {
           suhu_bme: avg(dataDiSlot, "suhu_bme"),
           kelembaban_bme: avg(dataDiSlot, "kelembaban_bme"),
           suhu_dht: avg(dataDiSlot, "suhu_dht"),
+          kelembaban_dht: avg(dataDiSlot, "kelembaban_dht"),
         });
       } else {
         hitunganPerJam.push({
@@ -314,6 +323,7 @@ const lihatData = async (sesi) => {
           suhu_bme: "-",
           kelembaban_bme: "-",
           suhu_dht: "-",
+          kelembaban_dht: "-",
         });
       }
     }
@@ -365,13 +375,14 @@ const unduhLaporanExcel = () => {
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
   csv += `Tempat Sampling            ;: ${s.tempat_sampling}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatDateLengkap(tglMulaiObj)} s.d ${formatDateLengkap(tglSelesaiObj)}\n\n`;
-  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C)\n";
+  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%)\n";
 
   data24Jam.value.forEach((row, i) => {
     const suhuBme = row.suhu_bme !== "-" ? row.suhu_bme.replace(".", ",") : "-";
     const lembabBme = row.kelembaban_bme !== "-" ? row.kelembaban_bme.replace(".", ",") : "-";
     const suhuDht = row.suhu_dht !== "-" ? row.suhu_dht.replace(".", ",") : "-";
-    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht}\n`;
+    const lembabDht = row.kelembaban_dht !== "-" ? row.kelembaban_dht.replace(".", ",") : "-";
+    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht};${lembabDht}\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
