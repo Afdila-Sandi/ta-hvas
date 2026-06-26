@@ -30,7 +30,7 @@ exports.login = async (req, res) => {
 
     //token 15 menit
     const accessToken = jwt.sign(
-      { id: user.id, username: user.username, role: user.peran },
+      { id: user.id, username: user.username, role: user.peran, nama: user.nama },
       SECRET_KEY,
       { expiresIn: "15m" },
     );
@@ -85,7 +85,7 @@ exports.refreshToken = async (req, res) => {
     const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
 
     const dbQuery =
-      "SELECT refresh_token, username, peran FROM users WHERE id = $1";
+      "SELECT refresh_token, username, nama, peran FROM users WHERE id = $1";
     const result = await pool.query(dbQuery, [decoded.id]);
 
     if (result.rows.length === 0) {
@@ -108,7 +108,7 @@ exports.refreshToken = async (req, res) => {
 
     const SECRET_KEY = process.env.JWT_SECRET;
     const newAccessToken = jwt.sign(
-      { id: decoded.id, username: user.username, role: user.peran },
+      { id: decoded.id, username: user.username, role: user.peran, nama: user.nama },
       SECRET_KEY,
       { expiresIn: "15m" },
     );

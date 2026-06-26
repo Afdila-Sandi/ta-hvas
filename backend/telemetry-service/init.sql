@@ -9,3 +9,15 @@ CREATE TABLE IF NOT EXISTS logs (
     kelembaban_dht NUMERIC(5,2),
     kebisingan NUMERIC(5,2)
 );
+
+CREATE TABLE IF NOT EXISTS sampling (
+    id SERIAL PRIMARY KEY,
+    teknisi_id INTEGER NOT NULL,
+    nama_teknisi VARCHAR(100) NOT NULL,
+    tempat_sampling VARCHAR(255) NOT NULL,
+    parameter_uji VARCHAR(255) NOT NULL,
+    perusahaan VARCHAR(255) NOT NULL,
+    waktu_mulai TIMESTAMP NOT NULL,
+    waktu_selesai TIMESTAMP,
+    dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -5,6 +5,7 @@ const express = require("express");
 const WebSocket = require("ws");
 
 const logsRoutes = require("./src/routes/logsRoutes");
+const samplingRoutes = require("./src/routes/samplingRoutes");
 const { initSensorService } = require("./src/services/logsService");
 
 const app = express();
@@ -14,6 +15,7 @@ const HOST = process.env.HOST;
 app.use(express.json());
 
 app.use("/", logsRoutes);
+app.use("/", samplingRoutes);
 
 const server = http.createServer(app);
 

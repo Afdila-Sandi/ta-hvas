@@ -98,6 +98,31 @@
 
             <li>
               <button
+                @click="activeMenu = 'laporan'"
+                class="flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
+              >
+                <i
+                  class="fa-solid fa-file-lines text-xl"
+                  :class="
+                    activeMenu === 'laporan'
+                      ? 'text-emerald-500'
+                      : 'text-slate-400'
+                  "
+                ></i>
+                <span
+                  class="text-[10px] font-bold"
+                  :class="
+                    activeMenu === 'laporan'
+                      ? 'text-emerald-600'
+                      : 'text-slate-400'
+                  "
+                  >Laporan</span
+                >
+              </button>
+            </li>
+
+            <li>
+              <button
                 @click="activeMenu = 'setelan'"
                 class="flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
               >
@@ -134,6 +159,7 @@ import { initWebSocket, closeWebSocket, isConnected } from "../services/ws";
 import TeknisiKontrol from "../components/TeknisiKontrol.vue";
 import TeknisiTren from "../components/TeknisiRiwayat.vue";
 import TeknisiSetelan from "../components/TeknisiSetelan.vue";
+import TeknisiLaporan from "../components/TeknisiLaporan.vue";
 
 const activeMenu = ref("kontrol");
 
@@ -143,6 +169,8 @@ const currentComponent = computed(() => {
       return TeknisiTren;
     case "setelan":
       return TeknisiSetelan;
+    case "laporan":
+      return TeknisiLaporan;
     default:
       return TeknisiKontrol;
   }
