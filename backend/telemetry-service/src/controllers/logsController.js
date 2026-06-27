@@ -5,13 +5,17 @@ exports.getLogs = async (req, res) => {
   try {
     client = await pool.connect();
 
+    const limit = Math.min(parseInt(req.query.limit) || 500, 1000);
+    const offset = parseInt(req.query.offset) || 0;
+
     const dbQuery = `
-      SELECT * FROM logs
+      SELECT id, waktu, suhu_bme, kelembaban_bme, tekanan, status_pompa, suhu_dht, kelembaban_dht, kebisingan
+      FROM logs
       ORDER BY waktu DESC
-      LIMIT 500
+      LIMIT $1 OFFSET $2
     `;
 
-    const result = await client.query(dbQuery);
+    const result = await client.query(dbQuery, [limit, offset]);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Gagal mengambil data logs:", error.message);

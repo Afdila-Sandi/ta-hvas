@@ -22,13 +22,29 @@ export const sensorData = ref({
 
 let wsTelemetry = null;
 let wsControl = null;
+let isIntentionalClose = false;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
+const BASE_RECONNECT_DELAY = 1000;
+
+function getReconnectDelay() {
+  const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts), 30000);
+  return delay;
+}
 
 export function initWebSocket() {
+  if (wsTelemetry && wsTelemetry.readyState === WebSocket.OPEN) return;
+
   const isDev = import.meta.env.DEV;
   const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
   const host = window.location.host;
 
+  isIntentionalClose = false;
+  reconnectAttempts = 0;
+
   function connectTelemetry() {
+    if (isIntentionalClose) return;
+
     const wsTelemetryURL = isDev
       ? `${import.meta.env.VITE_WS_URL}/api/ws/telemetry`
       : `${protocol}${host}/api/ws/telemetry`;
@@ -38,7 +54,7 @@ export function initWebSocket() {
     wsTelemetry.onopen = () => {
       wsStatus.value = "Terhubung";
       isConnected.value = true;
-      console.log("[WS Telemetry] Berhasil terhubung.");
+      reconnectAttempts = 0;
     };
 
     wsTelemetry.onmessage = (event) => {
@@ -69,32 +85,30 @@ export function initWebSocket() {
     wsTelemetry.onclose = () => {
       wsStatus.value = "Terputus...";
       isConnected.value = false;
-      console.log(
-        "[WS Telemetry] Terputus. Mencoba reconnect dalam 3 detik...",
-      );
-      setTimeout(connectTelemetry, 3000);
+      if (!isIntentionalClose && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        const delay = getReconnectDelay();
+        reconnectAttempts++;
+        setTimeout(connectTelemetry, delay);
+      }
     };
 
-    wsTelemetry.onerror = (err) => {
-      console.error("[WS Telemetry] Terjadi Error Jaringan.");
-    };
+    wsTelemetry.onerror = () => {};
   }
 
   function connectControl() {
+    if (isIntentionalClose) return;
+
     const wsControlURL = isDev
       ? `${import.meta.env.VITE_WS_URL}/api/ws/control`
       : `${protocol}${host}/api/ws/control`;
 
     wsControl = new WebSocket(wsControlURL);
 
-    wsControl.onopen = () => {
-      console.log("[WS Control] Berhasil terhubung.");
-    };
+    wsControl.onopen = () => {};
 
     wsControl.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("[WS Control] Data diterima:", data);
 
         if (data.type === "status_update" || data.type === "initial_status") {
           sensorData.value.status_pompa = data.status_pompa;
@@ -108,13 +122,13 @@ export function initWebSocket() {
     };
 
     wsControl.onclose = () => {
-      console.log("[WS Control] Terputus. Mencoba reconnect dalam 3 detik...");
-      setTimeout(connectControl, 3000);
+      if (!isIntentionalClose && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        const delay = getReconnectDelay();
+        setTimeout(connectControl, delay);
+      }
     };
 
-    wsControl.onerror = (err) => {
-      console.error("[WS Control] Terjadi Error Jaringan.");
-    };
+    wsControl.onerror = () => {};
   }
 
   connectTelemetry();
@@ -122,6 +136,9 @@ export function initWebSocket() {
 }
 
 export function closeWebSocket() {
+  isIntentionalClose = true;
+  reconnectAttempts = MAX_RECONNECT_ATTEMPTS;
+
   if (wsTelemetry) {
     wsTelemetry.close();
     wsTelemetry = null;
@@ -130,4 +147,6 @@ export function closeWebSocket() {
     wsControl.close();
     wsControl = null;
   }
+  isConnected.value = false;
+  wsStatus.value = "Terputus...";
 }

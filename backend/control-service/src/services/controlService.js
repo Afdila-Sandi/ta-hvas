@@ -34,7 +34,7 @@ exports.initControlService = (server, app) => {
   mqttClient.on("message", (topic, message) => {
     try {
       const data = JSON.parse(message.toString());
-      if (data.status_pompa || data.status_kipas) {
+      if (data.status_pompa !== undefined || data.status_kipas !== undefined) {
         latestStatus.status_pompa =
           data.status_pompa || latestStatus.status_pompa;
         latestStatus.mode = data.mode || latestStatus.mode;
@@ -84,20 +84,38 @@ exports.initControlService = (server, app) => {
       const { action, durasi_on, durasi_off, target, mode } = req.body;
       let payloadKeESP = {};
 
+      const allowedModes = ["AUTO", "MANUAL"];
+      const allowedTargets = ["POMPA", "KIPAS"];
+
       if (action === "SET_MODE_KIPAS") {
+        if (!mode || !allowedModes.includes(mode)) {
+          return res.status(400).json({
+            success: false,
+            message: `Mode tidak valid. Pilihan: ${allowedModes.join(", ")}`,
+          });
+        }
         payloadKeESP = { action: "SET_MODE_KIPAS", mode: mode };
       } else if (action === "ON" || action === "OFF") {
-        payloadKeESP = { action: action, target: target || "POMPA" };
+        const targetValue = target || "POMPA";
+        if (!allowedTargets.includes(targetValue)) {
+          return res.status(400).json({
+            success: false,
+            message: `Target tidak valid. Pilihan: ${allowedTargets.join(", ")}`,
+          });
+        }
+        payloadKeESP = { action: action, target: targetValue };
       } else if (action === "CYCLE") {
-        if (!durasi_on || !durasi_off) {
+        const on = parseInt(durasi_on, 10);
+        const off = parseInt(durasi_off, 10);
+        if (isNaN(on) || isNaN(off) || on <= 0 || off <= 0) {
           return res
             .status(400)
-            .json({ success: false, message: "Durasi siklus tidak valid." });
+            .json({ success: false, message: "Durasi siklus harus bilangan bulat positif." });
         }
         payloadKeESP = {
           action: "CYCLE",
-          durasi_on: parseInt(durasi_on),
-          durasi_off: parseInt(durasi_off),
+          durasi_on: on,
+          durasi_off: off,
         };
       } else {
         return res
@@ -106,11 +124,19 @@ exports.initControlService = (server, app) => {
       }
 
       const topicTujuan = `esp/control/${TOKEN_ESP}`;
-      mqttClient.publish(topicTujuan, JSON.stringify(payloadKeESP));
+      mqttClient.publish(topicTujuan, JSON.stringify(payloadKeESP), { qos: 1 }, (err) => {
+        if (err) {
+          console.error("[CONTROL] Gagal publish MQTT:", err.message);
+          return res.status(500).json({
+            success: false,
+            message: "Gagal mengirim perintah ke perangkat",
+          });
+        }
+      });
 
       return res.status(200).json({
         success: true,
-        message: `Perintah diteruskan ke alat via topik ${topicTujuan}`,
+        message: "Perintah diteruskan ke perangkat",
       });
     });
   }

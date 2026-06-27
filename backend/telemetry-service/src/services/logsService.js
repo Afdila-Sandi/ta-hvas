@@ -2,6 +2,8 @@ const mqtt = require("mqtt");
 const WebSocket = require("ws");
 const pool = require("../config/database");
 
+const TOKEN_RAHASIA = process.env.TOKEN_ESP;
+
 exports.initSensorService = (wss) => {
   const MQTT_BROKER = process.env.MQTT_BROKER;
 
@@ -31,10 +33,8 @@ exports.initSensorService = (wss) => {
     const topicParts = topic.split("/");
     const tokenMasuk = topicParts[2];
 
-    const TOKEN_RAHASIA = process.env.TOKEN_ESP;
-
     if (tokenMasuk !== TOKEN_RAHASIA) {
-      console.warn(`[KEAMANAN] Data ditolak! Token tidak valid: ${tokenMasuk}`);
+      console.warn("[KEAMANAN] Data ditolak! Token tidak valid");
       return;
     }
 

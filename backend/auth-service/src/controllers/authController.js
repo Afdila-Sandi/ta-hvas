@@ -6,6 +6,12 @@ const pool = require("../config/database");
 exports.login = async (req, res) => {
   const { username, password } = req.body;
 
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Username dan password harus diisi" });
+  }
+
   try {
     const dbQuery = "SELECT * FROM users WHERE username = $1";
     const result = await pool.query(dbQuery, [username]);
@@ -13,7 +19,7 @@ exports.login = async (req, res) => {
     if (result.rows.length === 0) {
       return res
         .status(401)
-        .json({ success: false, message: "Username tidak terdaftar" });
+        .json({ success: false, message: "Username atau password salah" });
     }
 
     const user = result.rows[0];
@@ -22,7 +28,7 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res
         .status(401)
-        .json({ success: false, message: "Password salah" });
+        .json({ success: false, message: "Username atau password salah" });
     }
 
     const SECRET_KEY = process.env.JWT_SECRET;
@@ -150,6 +156,34 @@ exports.logout = async (req, res) => {
 exports.register = async (req, res) => {
   const { username, password, nama, peran } = req.body;
 
+  if (!username || !password || !nama || !peran) {
+    return res.status(400).json({
+      success: false,
+      message: "Semua field harus diisi",
+    });
+  }
+
+  if (username.length < 3 || username.length > 50) {
+    return res.status(400).json({
+      success: false,
+      message: "Username harus 3-50 karakter",
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password minimal 6 karakter",
+    });
+  }
+
+  if (nama.length < 1 || nama.length > 100) {
+    return res.status(400).json({
+      success: false,
+      message: "Nama harus 1-100 karakter",
+    });
+  }
+
   if (!["teknisi", "admin"].includes(peran)) {
     return res.status(400).json({
       success: false,
@@ -158,21 +192,9 @@ exports.register = async (req, res) => {
   }
 
   try {
-    const checkUser = await pool.query(
-      "SELECT * FROM users WHERE username = $1",
-      [username],
-    );
-    if (checkUser.rows.length > 0) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Username sudah digunakan" });
-    }
-
-    //hash sandi
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    //simpan ke db
     const insertQuery = `
       INSERT INTO users (username, password_hash, nama, peran) 
       VALUES ($1, $2, $3, $4) RETURNING id, username, peran
@@ -190,6 +212,12 @@ exports.register = async (req, res) => {
       user: result.rows[0],
     });
   } catch (error) {
+    if (error.code === "23505") {
+      return res.status(400).json({
+        success: false,
+        message: "Username sudah digunakan",
+      });
+    }
     console.error("Error register:", error.message);
     return res.status(500).json({
       success: false,
@@ -228,6 +256,12 @@ exports.getUsers = async (req, res) => {
     let queryParams = [];
 
     if (role) {
+      if (!["teknisi", "admin"].includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: "Role tidak valid",
+        });
+      }
       dbQuery =
         "SELECT id, username, nama, peran FROM users WHERE peran = $1 ORDER BY nama ASC";
       queryParams = [role];
@@ -247,10 +281,32 @@ exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { username, nama, peran, password } = req.body;
 
+  const userId = Number(id);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "ID pengguna tidak valid",
+    });
+  }
+
+  if (!username || !nama) {
+    return res.status(400).json({
+      success: false,
+      message: "Username dan nama harus diisi",
+    });
+  }
+
   if (peran && !["teknisi", "admin"].includes(peran)) {
     return res
       .status(400)
       .json({ success: false, message: "Peran harus 'teknisi' atau 'admin'" });
+  }
+
+  if (password && password.trim() !== "" && password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password minimal 6 karakter",
+    });
   }
 
   try {
@@ -303,7 +359,15 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
 
-  if (parseInt(id) === req.user.id) {
+  const userId = Number(id);
+  if (isNaN(userId) || userId <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "ID pengguna tidak valid",
+    });
+  }
+
+  if (userId === req.user.id) {
     return res.status(403).json({
       success: false,
       message: "Anda tidak dapat menghapus akun Anda sendiri!",

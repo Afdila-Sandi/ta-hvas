@@ -1,2 +1,30 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# SSL certificates
+*.key
+*.crt
+
+# Dependencies
+node_modules/
+
+# Build output
+frontend/dist/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Project docs
 AGENTS.md
 docs/

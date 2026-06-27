@@ -34,6 +34,15 @@ exports.createSamplingSession = async (req, res) => {
       return res.status(400).json({ success: false, message: "Semua field wajib diisi" });
     }
 
+    if (tempat_sampling.length > 255 || parameter_uji.length > 255 || perusahaan.length > 255) {
+      return res.status(400).json({ success: false, message: "Input melebihi batas panjang yang diizinkan" });
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+    if (!dateRegex.test(waktu_mulai)) {
+      return res.status(400).json({ success: false, message: "Format waktu_mulai tidak valid (ISO 8601)" });
+    }
+
     client = await pool.connect();
 
     const dbQuery = `

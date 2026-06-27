@@ -4,8 +4,15 @@ const http = require("http");
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
+
+app.use(helmet());
+
+app.use(express.json({ limit: "1mb" }));
+
 const corsOptions = {
     origin: process.env.FRONTEND_URL,
     credentials: true,
@@ -13,7 +20,27 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-console.log("api gateway");
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Terlalu banyak permintaan, coba lagi nanti" },
+});
+app.use(limiter);
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Terlalu banyak percobaan login, coba lagi nanti" },
+});
+app.use("/api/auth/login", loginLimiter);
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
 app.use(
   "/api/auth",
@@ -21,6 +48,10 @@ app.use(
     target: "http://auth-service:5001",
     changeOrigin: true,
     pathRewrite: { "^/api/auth": "" },
+    onError: (err, req, res) => {
+      console.error("[GATEWAY] Auth Service error:", err.message);
+      res.status(502).json({ success: false, message: "Auth Service tidak tersedia" });
+    },
   }),
 );
 
@@ -30,6 +61,10 @@ app.use(
     target: "http://telemetry-service:5002",
     changeOrigin: true,
     pathRewrite: { "^/api/telemetry": "" },
+    onError: (err, req, res) => {
+      console.error("[GATEWAY] Telemetry Service error:", err.message);
+      res.status(502).json({ success: false, message: "Telemetry Service tidak tersedia" });
+    },
   }),
 );
 
@@ -39,10 +74,9 @@ app.use(
     target: "http://control-service:5003",
     changeOrigin: true,
     pathRewrite: { "^/api/control": "/" },
-    onProxyReq: (proxyReq, req, res) => {
-      console.log(
-        `[GATEWAY] Meneruskan perintah Relay ke Control Service: ${proxyReq.path}`,
-      );
+    onError: (err, req, res) => {
+      console.error("[GATEWAY] Control Service error:", err.message);
+      res.status(502).json({ success: false, message: "Control Service tidak tersedia" });
     },
   }),
 );
@@ -62,6 +96,11 @@ const wsControlProxy = createProxyMiddleware({
 app.use("/api/ws/telemetry", wsTelemetryProxy);
 app.use("/api/ws/control", wsControlProxy);
 
+app.use((err, req, res, next) => {
+  console.error("[GATEWAY] Unhandled error:", err.message);
+  res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
+});
+
 const server = http.createServer(app);
 
 server.on("upgrade", (req, socket, head) => {
@@ -72,6 +111,7 @@ server.on("upgrade", (req, socket, head) => {
   }
 });
 
-server.listen(5000, "0.0.0.0", () =>
-  console.log("Gateway listen on 0.0.0.0:5000"),
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, "0.0.0.0", () =>
+  console.log(`Gateway listen on 0.0.0.0:${PORT}`),
 );
