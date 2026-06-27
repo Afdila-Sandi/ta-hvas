@@ -6,10 +6,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'charts': ['chart.js', 'vue-chartjs'],
-          'apexcharts': ['vue3-apexcharts'],
+        manualChunks(id) {
+          if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
+            return 'vue-vendor';
+          }
+          if (id.includes('chart.js') || id.includes('vue-chartjs')) {
+            return 'charts';
+          }
+          if (id.includes('apexcharts') || id.includes('vue3-apexcharts')) {
+            return 'apexcharts';
+          }
         },
       },
     },
