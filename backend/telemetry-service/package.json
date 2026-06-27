@@ -6,10 +6,11 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.22.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.0",
     "mqtt": "^4.3.8",
     "pg": "^8.21.0",
-    "ws": "^8.21.0",
-    "jsonwebtoken": "^9.0.0"
+    "ws": "^8.21.0"
   },
   "description": "",
   "scripts": {
