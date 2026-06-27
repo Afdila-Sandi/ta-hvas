@@ -20,12 +20,6 @@ services:
         condition: service_started
     networks:
       - hvas-net
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "https://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
   #mqtt
   mosquitto:
@@ -93,11 +87,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5001/health"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 20s
 
   #telemetry-service
   telemetry-service:
@@ -114,11 +108,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5002/health"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5002/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 20s
 
   #control-service
   control-service:
@@ -133,11 +127,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5003/health"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5003/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 20s
 
   #api-gateway
   api-gateway:
@@ -156,11 +150,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 20s
 
 volumes:
   pgdata_auth:
