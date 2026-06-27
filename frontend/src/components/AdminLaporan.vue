@@ -25,18 +25,6 @@
               />
             </div>
           </div>
-          <div class="flex gap-2">
-            <input
-              v-model="filterDari"
-              type="date"
-              class="px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-            />
-            <input
-              v-model="filterSampai"
-              type="date"
-              class="px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-            />
-          </div>
         </div>
       </div>
 
