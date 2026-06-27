@@ -1,4 +1,4 @@
-name: Deploy HVAS to Server
+name: Deploy HVAS to AWS
 
 on:
   push:
@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -20,7 +17,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/hvas
+            cd /opt/ta-hvas
             
             # Pull latest changes
             git pull origin main

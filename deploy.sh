@@ -1,110 +1,147 @@
 #!/bin/bash
-# HVAS Deployment Script
+# HVAS Auto-Deploy Script for AWS EC2
 # Usage: bash deploy.sh
 
 set -e
 
-echo "=== HVAS Deployment Script ==="
+REPO="https://github.com/Afdila-Sandi/ta-hvas.git"
+REPO_DIR="/opt/ta-hvas"
+
+echo "=== HVAS Auto-Deploy for AWS EC2 ==="
 echo ""
 
-# Check if Docker is installed
-if ! command -v docker &> /dev/null; then
-    echo "[1/7] Installing Docker..."
-    sudo apt update
-    sudo apt install -y docker.io docker-compose-plugin
-    sudo systemctl enable --now docker
-else
-    echo "[1/7] Docker sudah terinstall"
-fi
+# Step 1: Install dependencies
+echo "[1/8] Installing dependencies..."
+sudo apt update -y
+sudo apt install -y docker.io docker-compose-plugin git curl openssl
 
-# Check if docker compose is available
-if ! docker compose version &> /dev/null; then
-    echo "Error: docker compose tidak tersedia"
-    exit 1
+# Install Node.js if not exists
+if ! command -v node &> /dev/null; then
+    echo "  - Installing Node.js 20..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt install -y nodejs
 fi
+echo "  - Node.js: $(node --version)"
+echo "  - npm: $(npm --version)"
 
-# Clone or update repository
-REPO_DIR="/opt/hvas"
+# Enable Docker
+sudo systemctl enable --now docker
+
+# Step 2: Get server IP automatically
+echo "[2/8] Detecting server IP..."
+SERVER_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "34.198.219.249")
+echo "  - Server IP: $SERVER_IP"
+
+# Step 3: Clone or update repo
+echo "[3/8] Setup repository..."
 if [ -d "$REPO_DIR" ]; then
-    echo "[2/7] Update repository..."
     cd $REPO_DIR
     git pull origin main
 else
-    echo "[2/7] Clone repository..."
-    sudo mkdir -p $REPO_DIR
-    sudo chown $USER:$USER $REPO_DIR
-    git clone https://github.com/YOUR_USERNAME/ta-hvas.git $REPO_DIR
+    sudo git clone $REPO $REPO_DIR
+    sudo chown -R $USER:$USER $REPO_DIR
     cd $REPO_DIR
 fi
 
-# Setup .env files if not exist
-echo "[3/7] Setup environment files..."
+# Step 4: Generate secrets
+echo "[4/8] Generating secrets..."
+JWT_SECRET=$(openssl rand -hex 64)
+JWT_REFRESH_SECRET=$(openssl rand -hex 64)
+DB_PASSWORD=$(openssl rand -base64 32)
+TOKEN_ESP=$(openssl rand -hex 32)
 
-setup_env() {
-    local service=$1
-    local env_file="backend/$service/.env"
-    local example_file="backend/$service/.env.example"
-    
-    if [ ! -f "$env_file" ] && [ -f "$example_file" ]; then
-        cp "$example_file" "$env_file"
-        echo "  - Buat $env_file dari template"
-        echo "  - WARNING: Edit $env_file dengan values yang benar!"
-    fi
-}
+# Step 5: Create .env files
+echo "[5/8] Creating .env files..."
 
-setup_env "auth-service"
-setup_env "telemetry-service"
-setup_env "control-service"
-setup_env "api-gateway"
+# auth-service/.env
+cat > backend/auth-service/.env << EOF
+PORT=5001
+HOST=0.0.0.0
+FRONTEND_URL=https://$SERVER_IP
+JWT_SECRET=$JWT_SECRET
+JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET
+DB_USER=auth_user
+DB_HOST=postgres-auth
+DB_NAME=db_auth
+DB_PASSWORD=$DB_PASSWORD
+POSTGRES_USER=auth_user
+POSTGRES_PASSWORD=$DB_PASSWORD
+POSTGRES_DB=db_auth
+EOF
 
-# Generate SSL certificate if not exist
-echo "[4/7] Setup SSL certificate..."
+# telemetry-service/.env
+cat > backend/telemetry-service/.env << EOF
+PORT=5002
+HOST=0.0.0.0
+DB_HOST=postgres-telemetry
+DB_USER=telemetry_user
+DB_PASSWORD=$DB_PASSWORD
+DB_NAME=db_telemetry
+MQTT_BROKER=mqtts://mosquitto:8000
+POSTGRES_USER=telemetry_user
+POSTGRES_PASSWORD=$DB_PASSWORD
+POSTGRES_DB=db_telemetry
+TOKEN_ESP=$TOKEN_ESP
+JWT_SECRET=$JWT_SECRET
+EOF
+
+# control-service/.env
+cat > backend/control-service/.env << EOF
+PORT=5003
+HOST=0.0.0.0
+JWT_SECRET=$JWT_SECRET
+MQTT_BROKER=mqtts://mosquitto:8000
+TOKEN_ESP=$TOKEN_ESP
+EOF
+
+# api-gateway/.env
+cat > backend/api-gateway/.env << EOF
+FRONTEND_URL=https://$SERVER_IP
+EOF
+
+echo "  - Semua .env files berhasil dibuat"
+
+# Step 6: Generate SSL
+echo "[6/8] Generating SSL certificate..."
 mkdir -p backend/certs
 if [ ! -f "backend/certs/hvas.crt" ]; then
-    echo "  - Generating SSL certificate..."
-    read -p "  - Masukkan IP Server (contoh: 192.168.1.100): " SERVER_IP
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
         -keyout backend/certs/hvas.key \
         -out backend/certs/hvas.crt \
         -subj "/O=BSPJI/OU=Lab Udara/CN=$SERVER_IP" \
         -addext "subjectAltName=IP:$SERVER_IP"
-    echo "  - SSL certificate berhasil dibuat"
+    echo "  - SSL certificate generated for $SERVER_IP"
 else
-    echo "  - SSL certificate sudah ada"
+    echo "  - SSL certificate already exists"
 fi
 
-# Build frontend
-echo "[5/7] Build frontend..."
-if [ -d "frontend/node_modules" ]; then
-    cd frontend
-    npm run build
-    cd ..
-else
-    cd frontend
-    npm install
-    npm run build
-    cd ..
-fi
+# Step 7: Build frontend
+echo "[7/8] Building frontend..."
+cd frontend
+npm install
+npm run build
+cd ..
 
-# Build and start Docker containers
-echo "[6/7] Build dan start Docker containers..."
+# Step 8: Start Docker
+echo "[8/8] Starting Docker containers..."
 docker compose up -d --build
 
-# Check status
-echo "[7/7] Cek status containers..."
-sleep 5
+# Wait and check
+sleep 10
 docker compose ps
 
 echo ""
-echo "=== Deployment Selesai ==="
+echo "=== DEPLOYMENT COMPLETE ==="
 echo ""
-echo "Aplikasi tersedia di: https://$SERVER_IP"
+echo "URL: https://$SERVER_IP"
 echo ""
-echo "Untuk melihat logs:"
-echo "  docker compose logs -f"
+echo "Secrets generated (save these!):"
+echo "  JWT_SECRET: $JWT_SECRET"
+echo "  JWT_REFRESH_SECRET: $JWT_REFRESH_SECRET"
+echo "  DB_PASSWORD: $DB_PASSWORD"
+echo "  TOKEN_ESP: $TOKEN_ESP"
 echo ""
-echo "Untuk stop:"
-echo "  docker compose down"
-echo ""
-echo "Untuk restart:"
-echo "  docker compose restart"
+echo "Commands:"
+echo "  docker compose logs -f    # View logs"
+echo "  docker compose down       # Stop"
+echo "  docker compose restart    # Restart"
