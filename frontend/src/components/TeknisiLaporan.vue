@@ -19,6 +19,19 @@
       <form @submit.prevent="buatSesiSampling" class="space-y-3">
         <div>
           <label class="block text-xs font-bold text-slate-500 mb-1"
+            >Perusahaan / Instansi</label
+          >
+          <input
+            v-model="form.perusahaan"
+            type="text"
+            required
+            placeholder="Contoh: PT Semen Padang"
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1"
             >Tempat Sampling</label
           >
           <input
@@ -43,19 +56,6 @@
           />
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1"
-            >Perusahaan / Instansi</label
-          >
-          <input
-            v-model="form.perusahaan"
-            type="text"
-            required
-            placeholder="Contoh: PT Semen Padang"
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-          />
-        </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-1"
@@ -72,32 +72,20 @@
             <label class="block text-xs font-bold text-slate-500 mb-1"
               >Jam Mulai</label
             >
-            <input
-              :value="form.jam_mulai ? form.jam_mulai + ':00 WIB' : ''"
-              readonly
+            <select
+              v-model="form.jam_mulai"
               required
-              placeholder="Pilih jam di bawah"
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50 text-slate-700 font-semibold"
-            />
-          </div>
-        </div>
-
-        <div>
-          <div class="grid grid-cols-6 gap-1.5">
-            <button
-              v-for="h in 24"
-              :key="h-1"
-              type="button"
-              @click="form.jam_mulai = String(h-1).padStart(2, '0')"
-              :class="
-                form.jam_mulai === String(h-1).padStart(2, '0')
-                  ? 'bg-emerald-500 text-white shadow-md'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              "
-              class="py-2 rounded-lg text-xs font-bold transition-all active:scale-95"
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 text-slate-700 font-semibold"
             >
-              {{ String(h-1).padStart(2, '0') }}
-            </button>
+              <option value="" disabled>Pilih Jam</option>
+              <option
+                v-for="h in 24"
+                :key="h - 1"
+                :value="String(h - 1).padStart(2, '0') + ':00'"
+              >
+                {{ String(h - 1).padStart(2, '0') }} WIB
+              </option>
+            </select>
           </div>
         </div>
 
@@ -309,7 +297,7 @@ const buatSesiSampling = async () => {
       tempat_sampling: form.tempat_sampling,
       parameter_uji: form.parameter_uji,
       perusahaan: form.perusahaan,
-      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00:00+07:00`,
+      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00+07:00`,
     };
     await api.post("/telemetry/sampling", payload);
     form.tempat_sampling = "";
