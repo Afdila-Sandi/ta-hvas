@@ -240,6 +240,10 @@ const cari = ref("");
 const filterDari = ref("");
 const filterSampai = ref("");
 
+const parseWaktuWIB = (waktuStr) => {
+  return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
+};
+
 const sesiFiltered = computed(() => {
   let hasil = daftarSesi.value;
 
@@ -256,12 +260,12 @@ const sesiFiltered = computed(() => {
 
   if (filterDari.value) {
     const dari = new Date(filterDari.value).getTime();
-    hasil = hasil.filter((s) => new Date(s.waktu_mulai).getTime() >= dari);
+    hasil = hasil.filter((s) => parseWaktuWIB(s.waktu_mulai).getTime() >= dari);
   }
 
   if (filterSampai.value) {
     const sampai = new Date(filterSampai.value).getTime() + 86400000;
-    hasil = hasil.filter((s) => new Date(s.waktu_mulai).getTime() <= sampai);
+    hasil = hasil.filter((s) => parseWaktuWIB(s.waktu_mulai).getTime() <= sampai);
   }
 
   return hasil;
@@ -284,7 +288,7 @@ const lihatData = async (sesi) => {
     const response = await api.get("/telemetry/logs");
     const semuaData = response.data;
 
-    const startTimestamp = new Date(sesi.waktu_mulai).getTime();
+    const startTimestamp = parseWaktuWIB(sesi.waktu_mulai).getTime();
     const endTimestamp = startTimestamp + 24 * 60 * 60 * 1000;
 
     const dataDalamRentang = semuaData.filter((item) => {
@@ -336,7 +340,7 @@ const lihatData = async (sesi) => {
 };
 
 const formatTanggal = (waktu) => {
-  return new Date(waktu).toLocaleDateString("id-ID", {
+  return parseWaktuWIB(waktu).toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -366,7 +370,7 @@ const unduhLaporanExcel = () => {
   if (data24Jam.value.length === 0 || !sesiAktif.value) return;
 
   const s = sesiAktif.value;
-  const tglMulaiObj = new Date(s.waktu_mulai);
+  const tglMulaiObj = parseWaktuWIB(s.waktu_mulai);
   const tglSelesaiObj = new Date(tglMulaiObj.getTime() + 24 * 60 * 60 * 1000);
 
   let csv = "LAPORAN HASIL PENGUJIAN KUALITAS UDARA\n\n";

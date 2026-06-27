@@ -273,6 +273,10 @@ const data24Jam = ref([]);
 const sedangMembuat = ref(false);
 const sedangMemuatData = ref(false);
 
+const parseWaktuWIB = (waktuStr) => {
+  return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
+};
+
 const form = reactive({
   tempat_sampling: "",
   parameter_uji: "Kualitas Udara Ambien",
@@ -297,7 +301,7 @@ const buatSesiSampling = async () => {
       tempat_sampling: form.tempat_sampling,
       parameter_uji: form.parameter_uji,
       perusahaan: form.perusahaan,
-      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00+07:00`,
+      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00`,
     };
     await api.post("/telemetry/sampling", payload);
     form.tempat_sampling = "";
@@ -322,7 +326,7 @@ const lihatData = async (sesi) => {
     const response = await api.get("/telemetry/logs");
     const semuaData = response.data;
 
-    const startTimestamp = new Date(sesi.waktu_mulai).getTime();
+    const startTimestamp = parseWaktuWIB(sesi.waktu_mulai).getTime();
     const endTimestamp = startTimestamp + 24 * 60 * 60 * 1000;
 
     const dataDalamRentang = semuaData.filter((item) => {
@@ -399,7 +403,7 @@ const formatDateTimeStr = (dateObj) => {
 };
 
 const formatTanggal = (waktu) => {
-  return new Date(waktu).toLocaleDateString("id-ID", {
+  return parseWaktuWIB(waktu).toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -412,7 +416,7 @@ const unduhLaporanExcel = () => {
   if (data24Jam.value.length === 0 || !sesiAktif.value) return;
 
   const s = sesiAktif.value;
-  const tglMulaiObj = new Date(s.waktu_mulai);
+  const tglMulaiObj = parseWaktuWIB(s.waktu_mulai);
   const tglSelesaiObj = new Date(tglMulaiObj.getTime() + 24 * 60 * 60 * 1000);
 
   const formatTgl = (d) =>
