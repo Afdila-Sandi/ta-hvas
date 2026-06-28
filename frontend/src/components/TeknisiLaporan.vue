@@ -25,7 +25,7 @@
             v-model="form.perusahaan"
             type="text"
             required
-            placeholder="Contoh: PT Semen Padang"
+            placeholder="Contoh: BSPJI Padang"
             class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
           />
         </div>
@@ -38,7 +38,7 @@
             v-model="form.tempat_sampling"
             type="text"
             required
-            placeholder="Contoh: Ruang Server BSPJI"
+            placeholder="Contoh: Depan kantor BSPJI"
             class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
           />
         </div>
