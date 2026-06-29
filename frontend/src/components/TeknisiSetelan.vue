@@ -186,8 +186,7 @@ const updateProfile = async () => {
 
     // Perbarui nama di kartu profil atas
     userName.value = response.data.user.nama;
-    profileForm.newPassword = ""; // Kosongkan sandi setelah sukses
-
+    profileForm.newPassword = ""; 
     setTimeout(() => {
       isFormOpen.value = false;
       formMessage.value = "";

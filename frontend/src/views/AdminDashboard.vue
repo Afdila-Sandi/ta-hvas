@@ -175,9 +175,13 @@ const hapusTeknisi = async (id) => {
   }
 };
 
+
+
 const prosesLogoutAdmin = async () => {
-  await authStore.logout();
-  router.push("/login");
+  if (confirm("Yakin ingin keluar?")) {
+    await authStore.logout();
+    router.push("/login");
+  }
 };
 
 onMounted(() => {
