@@ -19,6 +19,21 @@ services:
         condition: service_started
     networks:
       - hvas-net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "-q",
+          "-O",
+          "/dev/null",
+          "--no-check-certificate",
+          "https://127.0.0.1/",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   #mqtt
   mosquitto:
@@ -33,10 +48,30 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck"]
+      test:
+        [
+          "CMD",
+          "mosquitto_sub",
+          "-h",
+          "localhost",
+          "-p",
+          "8000",
+          "--cafile",
+          "/mosquitto/config/certs/hvas.crt",
+          "--insecure",
+          "-t",
+          "$$SYS/#",
+          "-C",
+          "1",
+          "-i",
+          "healthcheck",
+          "-W",
+          "5",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 15s
 
   #database
   postgres-auth:
@@ -88,7 +123,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''http'').get(''http://localhost:5001/health'', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(''error'', () => process.exit(1))"',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -109,7 +148,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5002/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''http'').get(''http://localhost:5002/health'', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(''error'', () => process.exit(1))"',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -128,7 +171,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5003/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''http'').get(''http://localhost:5003/health'', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(''error'', () => process.exit(1))"',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -151,7 +198,11 @@ services:
     networks:
       - hvas-net
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:5000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''http'').get(''http://localhost:5000/health'', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on(''error'', () => process.exit(1))"',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
