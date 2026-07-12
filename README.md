@@ -50,6 +50,7 @@ graph TD
 
 - Kontrol pompa sampling (Manual / Auto Cycle)
 - Kontrol kipas panel (Auto / Manual)
+- Kontrol eksklusif — hanya teknisi dengan sesi sampling aktif yang bisa kendali alat
 - Monitor sensor real-time via WebSocket
 - Riwayat data & grafik tren 1 jam terakhir
 - Laporan Sampling — buat sesi sampling, lihat data 24 jam, export ke Excel
@@ -60,6 +61,7 @@ graph TD
 - SSL/TLS untuk semua komunikasi (HTTPS + MQTTS)
 - JWT Access Token (15 menit) + Refresh Token (24 jam, httpOnly cookie)
 - Single session — login di perangkat lain menggantikan sesi lama
+- Sesi sampling eksklusif — satu teknisi per sesi 24 jam, teknisi lain hanya monitoring
 - TOKEN_ESP sebagai shared secret antara ESP32 dan server
 
 ## Struktur Project
@@ -179,11 +181,12 @@ cd frontend && npm install && npm run dev
 | GET    | `/api/auth/users`             | Admin   | List users                 |
 | PUT    | `/api/auth/users/:id`         | Admin   | Update user                |
 | DELETE | `/api/auth/users/:id`         | Admin   | Hapus user                 |
-| GET    | `/api/telemetry/logs`         | No      | Data sensor (500 terakhir) |
-| GET    | `/api/telemetry/sampling`     | Bearer  | Daftar sesi sampling       |
-| POST   | `/api/telemetry/sampling`     | Bearer  | Buat sesi sampling baru    |
-| DELETE | `/api/telemetry/sampling/:id` | Bearer  | Hapus sesi sampling        |
-| POST   | `/api/control`                | Teknisi | Kontrol pompa/kipas        |
+| GET    | `/api/telemetry/logs`                  | No      | Data sensor (500 terakhir) |
+| GET    | `/api/telemetry/sampling`              | Bearer  | Daftar sesi sampling       |
+| GET    | `/api/telemetry/sampling/active-session` | Bearer | Cek sesi sampling aktif    |
+| POST   | `/api/telemetry/sampling`              | Bearer  | Buat sesi sampling baru    |
+| DELETE | `/api/telemetry/sampling/:id`          | Bearer  | Hapus sesi sampling        |
+| POST   | `/api/control`                         | Teknisi | Kontrol pompa/kipas        |
 
 ### MQTT Topics
 
@@ -216,6 +219,7 @@ cd frontend && npm install && npm run dev
 | Data sensor tidak muncul        | Cek `TOKEN_ESP` sama di `.env` dan ESP32                   |
 | Login gagal                     | Cek `JWT_SECRET` di `auth-service/.env`                    |
 | Tabel `sampling` tidak ada      | Jalankan SQL manual atau hapus volume `pgdata_telemetry` lalu restart |
+| Kolom `kondisi_cuaca` tidak ada | Jalankan: `ALTER TABLE sampling ADD COLUMN kondisi_cuaca VARCHAR(100) NOT NULL DEFAULT 'Cerah';` |
 
 ## License
 
