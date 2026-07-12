@@ -28,13 +28,13 @@ exports.getSamplingSessions = async (req, res) => {
 exports.createSamplingSession = async (req, res) => {
   let client;
   try {
-    const { tempat_sampling, parameter_uji, perusahaan, waktu_mulai } = req.body;
+    const { tempat_sampling, parameter_uji, perusahaan, waktu_mulai, kondisi_cuaca } = req.body;
 
-    if (!tempat_sampling || !parameter_uji || !perusahaan || !waktu_mulai) {
+    if (!tempat_sampling || !parameter_uji || !perusahaan || !waktu_mulai || !kondisi_cuaca) {
       return res.status(400).json({ success: false, message: "Semua field wajib diisi" });
     }
 
-    if (tempat_sampling.length > 255 || parameter_uji.length > 255 || perusahaan.length > 255) {
+    if (tempat_sampling.length > 255 || parameter_uji.length > 255 || perusahaan.length > 255 || kondisi_cuaca.length > 255) {
       return res.status(400).json({ success: false, message: "Input melebihi batas panjang yang diizinkan" });
     }
 
@@ -45,9 +45,17 @@ exports.createSamplingSession = async (req, res) => {
 
     client = await pool.connect();
 
+    const cekAktif = await client.query(
+      `SELECT id FROM sampling WHERE waktu_mulai + INTERVAL '24 hours' > NOW() AND teknisi_id != $1`,
+      [req.user.id]
+    );
+    if (cekAktif.rows.length > 0) {
+      return res.status(403).json({ success: false, message: "Sedang ada sesi sampling aktif dari teknisi lain. Silakan tunggu hingga sesi selesai." });
+    }
+
     const dbQuery = `
-      INSERT INTO sampling (teknisi_id, nama_teknisi, tempat_sampling, parameter_uji, perusahaan, waktu_mulai)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO sampling (teknisi_id, nama_teknisi, tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     const result = await client.query(dbQuery, [
@@ -56,12 +64,33 @@ exports.createSamplingSession = async (req, res) => {
       tempat_sampling,
       parameter_uji,
       perusahaan,
+      kondisi_cuaca,
       waktu_mulai,
     ]);
 
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error("Gagal membuat sesi sampling:", error.message);
+    res.status(500).json({ success: false, message: "Terjadi kesalahan" });
+  } finally {
+    if (client) client.release();
+  }
+};
+
+exports.getActiveSession = async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query(
+      `SELECT * FROM sampling WHERE teknisi_id = $1 AND waktu_mulai + INTERVAL '24 hours' > NOW() ORDER BY waktu_mulai DESC LIMIT 1`,
+      [req.user.id]
+    );
+    if (result.rows.length > 0) {
+      return res.status(200).json({ active: true, session: result.rows[0] });
+    }
+    return res.status(200).json({ active: false, session: null });
+  } catch (error) {
+    console.error("Gagal mengecek sesi aktif:", error.message);
     res.status(500).json({ success: false, message: "Terjadi kesalahan" });
   } finally {
     if (client) client.release();

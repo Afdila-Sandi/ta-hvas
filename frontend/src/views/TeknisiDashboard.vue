@@ -49,7 +49,9 @@
             <li>
               <button
                 @click="activeMenu = 'kontrol'"
+                :disabled="!hasActiveSession"
                 class="flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
+                :class="!hasActiveSession ? 'opacity-40 cursor-not-allowed' : ''"
               >
                 <i
                   class="fa-solid fa-sliders text-xl"
@@ -155,6 +157,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { initWebSocket, closeWebSocket, isConnected } from "../services/ws";
+import api from "../services/api";
 
 import TeknisiKontrol from "../components/TeknisiKontrol.vue";
 import TeknisiTren from "../components/TeknisiRiwayat.vue";
@@ -162,6 +165,23 @@ import TeknisiSetelan from "../components/TeknisiSetelan.vue";
 import TeknisiLaporan from "../components/TeknisiLaporan.vue";
 
 const activeMenu = ref("kontrol");
+const hasActiveSession = ref(false);
+
+const cekSesiAktif = async () => {
+  try {
+    const res = await api.get("/telemetry/sampling/active-session");
+    hasActiveSession.value = res.data.active;
+    if (!hasActiveSession.value && activeMenu.value === "kontrol") {
+      activeMenu.value = "laporan";
+    }
+  } catch (error) {
+    console.error("Gagal mengecek sesi aktif:", error);
+    hasActiveSession.value = false;
+    if (activeMenu.value === "kontrol") {
+      activeMenu.value = "laporan";
+    }
+  }
+};
 
 const currentComponent = computed(() => {
   switch (activeMenu.value) {
@@ -172,12 +192,16 @@ const currentComponent = computed(() => {
     case "laporan":
       return TeknisiLaporan;
     default:
+      if (!hasActiveSession.value) {
+        return TeknisiLaporan;
+      }
       return TeknisiKontrol;
   }
 });
 
 onMounted(() => {
   initWebSocket();
+  cekSesiAktif();
 });
 
 onUnmounted(() => {

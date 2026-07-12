@@ -366,6 +366,7 @@ const unduhLaporanExcel = () => {
   csv += `Parameter Pengujian        ;: ${s.parameter_uji}\n`;
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
   csv += `Tempat Sampling            ;: ${s.tempat_sampling}\n`;
+  csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatDateLengkap(tglMulaiObj)} s.d ${formatDateLengkap(tglSelesaiObj)}\n\n`;
   csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%)\n";
 

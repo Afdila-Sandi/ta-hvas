@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS sampling (
     tempat_sampling VARCHAR(255) NOT NULL,
     parameter_uji VARCHAR(255) NOT NULL,
     perusahaan VARCHAR(255) NOT NULL,
+    kondisi_cuaca VARCHAR(100) NOT NULL,
     waktu_mulai TIMESTAMP NOT NULL,
     waktu_selesai TIMESTAMP,
     dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP

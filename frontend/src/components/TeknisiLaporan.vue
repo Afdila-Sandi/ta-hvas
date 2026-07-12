@@ -56,6 +56,35 @@
           />
         </div>
 
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1"
+            >Kondisi Cuaca</label
+          >
+          <select
+            v-model="form.kondisi_cuaca"
+            required
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+          >
+            <option value="" disabled>Pilih Kondisi Cuaca</option>
+            <option value="Cerah">Cerah</option>
+            <option value="Berawan">Berawan</option>
+            <option value="Mendung">Mendung</option>
+            <option value="Hujan Ringan">Hujan Ringan</option>
+            <option value="Hujan Lebat">Hujan Lebat</option>
+            <option value="Gerimis">Gerimis</option>
+            <option value="Berangin">Berangin</option>
+            <option value="custom">Lainnya (isi sendiri)...</option>
+          </select>
+          <input
+            v-if="form.kondisi_cuaca === 'custom'"
+            v-model="form.kondisi_cuaca_custom"
+            type="text"
+            required
+            placeholder="Masukkan kondisi cuaca..."
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 mt-2"
+          />
+        </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-500 mb-1"
@@ -283,6 +312,8 @@ const form = reactive({
   perusahaan: "",
   tanggal_mulai: "",
   jam_mulai: "",
+  kondisi_cuaca: "",
+  kondisi_cuaca_custom: "",
 });
 
 const ambilDaftarSesi = async () => {
@@ -297,11 +328,16 @@ const ambilDaftarSesi = async () => {
 const buatSesiSampling = async () => {
   sedangMembuat.value = true;
   try {
+    const kondisiCuacaAkhir = form.kondisi_cuaca === "custom"
+      ? form.kondisi_cuaca_custom
+      : form.kondisi_cuaca;
+
     const payload = {
       tempat_sampling: form.tempat_sampling,
       parameter_uji: form.parameter_uji,
       perusahaan: form.perusahaan,
       waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00`,
+      kondisi_cuaca: kondisiCuacaAkhir,
     };
     await api.post("/telemetry/sampling", payload);
     form.tempat_sampling = "";
@@ -309,6 +345,8 @@ const buatSesiSampling = async () => {
     form.perusahaan = "";
     form.tanggal_mulai = "";
     form.jam_mulai = "";
+    form.kondisi_cuaca = "";
+    form.kondisi_cuaca_custom = "";
     await ambilDaftarSesi();
   } catch (error) {
     alert(error.response?.data?.message || "Gagal membuat sesi sampling");
@@ -431,6 +469,7 @@ const unduhLaporanExcel = () => {
   csv += `Parameter Pengujian        ;: ${s.parameter_uji}\n`;
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
   csv += `Tempat Sampling            ;: ${s.tempat_sampling}\n`;
+  csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatTgl(tglMulaiObj)} s.d ${formatTgl(tglSelesaiObj)}\n\n`;
   csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (°C);Kelembaban Ruang Box (%);Suhu Lingkungan (°C);Kelembaban Lingkungan (%)\n";
 

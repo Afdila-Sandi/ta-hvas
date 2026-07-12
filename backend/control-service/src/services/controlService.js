@@ -1,6 +1,7 @@
 const WebSocket = require("ws");
 const mqtt = require("mqtt");
 const jwt = require("jsonwebtoken");
+const http = require("http");
 
 exports.initControlService = (server, app) => {
   const SECRET_KEY = process.env.JWT_SECRET;
@@ -57,7 +58,7 @@ exports.initControlService = (server, app) => {
   });
 
   if (app) {
-    app.post("/", (req, res) => {
+    app.post("/", async (req, res) => {
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return res
@@ -79,6 +80,33 @@ exports.initControlService = (server, app) => {
         return res
           .status(403)
           .json({ success: false, message: "Akses ditolak." });
+      }
+
+      const cekSesiAktif = () => {
+        return new Promise((resolve) => {
+          const reqHttp = http.get(
+            `http://telemetry-service:5002/sampling/active-session`,
+            { headers: { Authorization: `Bearer ${token}` } },
+            (resHttp) => {
+              let data = "";
+              resHttp.on("data", (chunk) => (data += chunk));
+              resHttp.on("end", () => {
+                try { resolve(JSON.parse(data)); }
+                catch { resolve({ active: false }); }
+              });
+            }
+          );
+          reqHttp.on("error", () => resolve({ active: false }));
+          reqHttp.setTimeout(3000, () => { reqHttp.destroy(); resolve({ active: false }); });
+        });
+      };
+
+      const sesiStatus = await cekSesiAktif();
+      if (!sesiStatus.active) {
+        return res.status(403).json({
+          success: false,
+          message: "Tidak ada sesi sampling aktif. Buat sesi sampling terlebih dahulu."
+        });
       }
 
       const { action, durasi_on, durasi_off, target, mode } = req.body;
