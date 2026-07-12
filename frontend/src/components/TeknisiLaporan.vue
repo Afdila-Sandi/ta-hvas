@@ -302,6 +302,8 @@ const data24Jam = ref([]);
 const sedangMembuat = ref(false);
 const sedangMemuatData = ref(false);
 
+const emit = defineEmits(["session-created"]);
+
 const parseWaktuWIB = (waktuStr) => {
   return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
 };
@@ -348,6 +350,7 @@ const buatSesiSampling = async () => {
     form.kondisi_cuaca = "";
     form.kondisi_cuaca_custom = "";
     await ambilDaftarSesi();
+    emit("session-created");
   } catch (error) {
     alert(error.response?.data?.message || "Gagal membuat sesi sampling");
   } finally {

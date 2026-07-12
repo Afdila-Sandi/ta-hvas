@@ -38,7 +38,7 @@
       </header>
 
       <main class="flex-1 overflow-y-auto p-6 space-y-6 pb-24">
-        <component :is="currentComponent" />
+        <component :is="currentComponent" @session-created="cekSesiAktif" />
       </main>
 
       <div class="fixed bottom-0 w-full max-w-md z-50">
