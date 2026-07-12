@@ -5,132 +5,9 @@
         Laporan Sampling
       </h1>
       <p class="text-xs text-slate-500 mt-1">
-        Buat sesi sampling baru dan ekspor data ke Excel.
+        Lihat data sesi sampling dan ekspor ke Excel.
       </p>
     </header>
-
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-      <h2
-        class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4"
-      >
-        Sesi Sampling Baru
-      </h2>
-
-      <form @submit.prevent="buatSesiSampling" class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1"
-            >Perusahaan / Instansi</label
-          >
-          <input
-            v-model="form.perusahaan"
-            type="text"
-            required
-            placeholder="Contoh: BSPJI Padang"
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1"
-            >Tempat Sampling</label
-          >
-          <input
-            v-model="form.tempat_sampling"
-            type="text"
-            required
-            placeholder="Contoh: Depan kantor BSPJI"
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1"
-            >Parameter Uji</label
-          >
-          <input
-            v-model="form.parameter_uji"
-            type="text"
-            required
-            placeholder="Contoh: Kualitas Udara Ambien"
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1"
-            >Kondisi Cuaca</label
-          >
-          <select
-            v-model="form.kondisi_cuaca"
-            required
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-          >
-            <option value="" disabled>Pilih Kondisi Cuaca</option>
-            <option value="Cerah">Cerah</option>
-            <option value="Berawan">Berawan</option>
-            <option value="Mendung">Mendung</option>
-            <option value="Hujan Ringan">Hujan Ringan</option>
-            <option value="Hujan Lebat">Hujan Lebat</option>
-            <option value="Gerimis">Gerimis</option>
-            <option value="Berangin">Berangin</option>
-            <option value="custom">Lainnya (isi sendiri)...</option>
-          </select>
-          <input
-            v-if="form.kondisi_cuaca === 'custom'"
-            v-model="form.kondisi_cuaca_custom"
-            type="text"
-            required
-            placeholder="Masukkan kondisi cuaca..."
-            class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 mt-2"
-          />
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1"
-              >Tanggal Mulai</label
-            >
-            <input
-              v-model="form.tanggal_mulai"
-              type="date"
-              required
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1"
-              >Jam Mulai</label
-            >
-            <select
-              v-model="form.jam_mulai"
-              required
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 text-slate-700 font-semibold"
-            >
-              <option value="" disabled>Pilih Jam</option>
-              <option
-                v-for="h in 24"
-                :key="h - 1"
-                :value="String(h - 1).padStart(2, '0') + ':00'"
-              >
-                {{ String(h - 1).padStart(2, '0') }} WIB
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          :disabled="sedangMembuat"
-          class="w-full bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center"
-        >
-          <i
-            class="fa-solid fa-plus mr-2"
-            :class="{ 'animate-spin': sedangMembuat }"
-          ></i>
-          Buat Sesi Sampling
-        </button>
-      </form>
-    </div>
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
       <div class="px-5 py-4 border-b border-slate-100">
@@ -164,7 +41,7 @@
                 {{ sesi.parameter_uji }}
               </p>
               <p class="text-[10px] text-slate-400">
-                {{ formatTanggal(sesi.waktu_mulai) }}
+                Cuaca: {{ sesi.kondisi_cuaca }} &middot; {{ formatTanggal(sesi.waktu_mulai) }}
               </p>
             </div>
             <div class="flex gap-2">
@@ -173,6 +50,12 @@
                 class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-all active:scale-95"
               >
                 <i class="fa-solid fa-eye mr-1"></i> Lihat
+              </button>
+              <button
+                @click="bukaEdit(sesi)"
+                class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-lg transition-all active:scale-95"
+              >
+                <i class="fa-solid fa-pen"></i>
               </button>
               <button
                 @click="hapusSesi(sesi.id)"
@@ -230,7 +113,7 @@
               <th
                 class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
               >
-                Suhu Dalam (°C)
+                Suhu Dalam (&deg;C)
               </th>
               <th
                 class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
@@ -240,12 +123,17 @@
               <th
                 class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
               >
-                Suhu Luar (°C)
+                Suhu Luar (&deg;C)
               </th>
               <th
                 class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
               >
                 Lembab Luar (%)
+              </th>
+              <th
+                class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
+              >
+                Tekanan (hPa)
               </th>
             </tr>
           </thead>
@@ -273,10 +161,13 @@
               <td class="px-4 py-3 text-xs text-slate-600 text-center">
                 {{ row.kelembaban_dht }}
               </td>
+              <td class="px-4 py-3 text-xs text-slate-600 text-center">
+                {{ row.tekanan }}
+              </td>
             </tr>
             <tr v-if="data24Jam.length === 0 && !sedangMemuatData">
               <td
-                colspan="6"
+                colspan="7"
                 class="px-6 py-12 text-center text-slate-400 text-sm"
               >
                 <i
@@ -289,6 +180,127 @@
         </table>
       </div>
     </div>
+
+    <div
+      v-if="showEditModal"
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      @click.self="tutupEdit"
+    >
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-bold text-slate-800">Edit Sesi Sampling</h3>
+          <button @click="tutupEdit" class="text-slate-400 hover:text-slate-600">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <form @submit.prevent="simpanEdit" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Perusahaan / Instansi</label>
+            <input
+              v-model="editForm.perusahaan"
+              type="text"
+              required
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Tempat Sampling</label>
+            <input
+              v-model="editForm.tempat_sampling"
+              type="text"
+              required
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Parameter Uji</label>
+            <input
+              v-model="editForm.parameter_uji"
+              type="text"
+              required
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Kondisi Cuaca</label>
+            <select
+              v-model="editForm.kondisi_cuaca"
+              required
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+            >
+              <option value="" disabled>Pilih</option>
+              <option value="Cerah">Cerah</option>
+              <option value="Berawan">Berawan</option>
+              <option value="Mendung">Mendung</option>
+              <option value="Hujan Ringan">Hujan Ringan</option>
+              <option value="Hujan Lebat">Hujan Lebat</option>
+              <option value="Gerimis">Gerimis</option>
+              <option value="Berangin">Berangin</option>
+              <option value="custom">Lainnya (isi sendiri)...</option>
+            </select>
+            <input
+              v-if="editForm.kondisi_cuaca === 'custom'"
+              v-model="editForm.kondisi_cuaca_custom"
+              type="text"
+              required
+              placeholder="Masukkan kondisi cuaca..."
+              class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 mt-2"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">Tanggal Mulai</label>
+              <input
+                v-model="editForm.tanggal_mulai"
+                type="date"
+                required
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">Jam Mulai</label>
+              <select
+                v-model="editForm.jam_mulai"
+                required
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 text-slate-700 font-semibold"
+              >
+                <option value="" disabled>Pilih Jam</option>
+                <option
+                  v-for="h in 24"
+                  :key="h - 1"
+                  :value="String(h - 1).padStart(2, '0') + ':00'"
+                >
+                  {{ String(h - 1).padStart(2, '0') }} WIB
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-2">
+            <button
+              type="button"
+              @click="tutupEdit"
+              class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-all active:scale-95"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              :disabled="sedangEdit"
+              class="flex-1 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold rounded-xl transition-all active:scale-95 disabled:opacity-50"
+            >
+              <i v-if="sedangEdit" class="fa-solid fa-spinner animate-spin mr-1"></i>
+              Simpan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -299,18 +311,15 @@ import api from "../services/api";
 const daftarSesi = ref([]);
 const sesiAktif = ref(null);
 const data24Jam = ref([]);
-const sedangMembuat = ref(false);
 const sedangMemuatData = ref(false);
 
-const emit = defineEmits(["session-created"]);
+const showEditModal = ref(false);
+const sedangEdit = ref(false);
+const editSesiId = ref(null);
 
-const parseWaktuWIB = (waktuStr) => {
-  return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
-};
-
-const form = reactive({
+const editForm = reactive({
   tempat_sampling: "",
-  parameter_uji: "Kualitas Udara Ambien",
+  parameter_uji: "",
   perusahaan: "",
   tanggal_mulai: "",
   jam_mulai: "",
@@ -318,43 +327,16 @@ const form = reactive({
   kondisi_cuaca_custom: "",
 });
 
+const parseWaktuWIB = (waktuStr) => {
+  return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
+};
+
 const ambilDaftarSesi = async () => {
   try {
     const res = await api.get("/telemetry/sampling");
     daftarSesi.value = res.data;
   } catch (error) {
     console.error("Gagal mengambil sesi sampling:", error);
-  }
-};
-
-const buatSesiSampling = async () => {
-  sedangMembuat.value = true;
-  try {
-    const kondisiCuacaAkhir = form.kondisi_cuaca === "custom"
-      ? form.kondisi_cuaca_custom
-      : form.kondisi_cuaca;
-
-    const payload = {
-      tempat_sampling: form.tempat_sampling,
-      parameter_uji: form.parameter_uji,
-      perusahaan: form.perusahaan,
-      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00`,
-      kondisi_cuaca: kondisiCuacaAkhir,
-    };
-    await api.post("/telemetry/sampling", payload);
-    form.tempat_sampling = "";
-    form.parameter_uji = "Kualitas Udara Ambien";
-    form.perusahaan = "";
-    form.tanggal_mulai = "";
-    form.jam_mulai = "";
-    form.kondisi_cuaca = "";
-    form.kondisi_cuaca_custom = "";
-    await ambilDaftarSesi();
-    emit("session-created");
-  } catch (error) {
-    alert(error.response?.data?.message || "Gagal membuat sesi sampling");
-  } finally {
-    sedangMembuat.value = false;
   }
 };
 
@@ -399,6 +381,7 @@ const lihatData = async (sesi) => {
           kelembaban_bme: avg(dataDiSlot, "kelembaban_bme"),
           suhu_dht: avg(dataDiSlot, "suhu_dht"),
           kelembaban_dht: avg(dataDiSlot, "kelembaban_dht"),
+          tekanan: avg(dataDiSlot, "tekanan"),
         });
       } else {
         hitunganPerJam.push({
@@ -407,6 +390,7 @@ const lihatData = async (sesi) => {
           kelembaban_bme: "-",
           suhu_dht: "-",
           kelembaban_dht: "-",
+          tekanan: "-",
         });
       }
     }
@@ -417,6 +401,48 @@ const lihatData = async (sesi) => {
     alert("Gagal mengambil data sensor.");
   } finally {
     sedangMemuatData.value = false;
+  }
+};
+
+const bukaEdit = (sesi) => {
+  editSesiId.value = sesi.id;
+  const tglObj = parseWaktuWIB(sesi.waktu_mulai);
+  editForm.perusahaan = sesi.perusahaan;
+  editForm.tempat_sampling = sesi.tempat_sampling;
+  editForm.parameter_uji = sesi.parameter_uji;
+  editForm.kondisi_cuaca = sesi.kondisi_cuaca || "";
+  editForm.kondisi_cuaca_custom = "";
+  editForm.tanggal_mulai = tglObj.toISOString().split("T")[0];
+  editForm.jam_mulai = String(tglObj.getHours()).padStart(2, "0") + ":00";
+  showEditModal.value = true;
+};
+
+const tutupEdit = () => {
+  showEditModal.value = false;
+  editSesiId.value = null;
+};
+
+const simpanEdit = async () => {
+  sedangEdit.value = true;
+  try {
+    const kondisiCuacaAkhir = editForm.kondisi_cuaca === "custom"
+      ? editForm.kondisi_cuaca_custom
+      : editForm.kondisi_cuaca;
+
+    const payload = {
+      tempat_sampling: editForm.tempat_sampling,
+      parameter_uji: editForm.parameter_uji,
+      perusahaan: editForm.perusahaan,
+      waktu_mulai: `${editForm.tanggal_mulai}T${editForm.jam_mulai}:00`,
+      kondisi_cuaca: kondisiCuacaAkhir,
+    };
+    await api.put(`/telemetry/sampling/${editSesiId.value}`, payload);
+    tutupEdit();
+    await ambilDaftarSesi();
+  } catch (error) {
+    alert(error.response?.data?.message || "Gagal mengupdate sesi sampling");
+  } finally {
+    sedangEdit.value = false;
   }
 };
 
@@ -474,14 +500,15 @@ const unduhLaporanExcel = () => {
   csv += `Tempat Sampling            ;: ${s.tempat_sampling}\n`;
   csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatTgl(tglMulaiObj)} s.d ${formatTgl(tglSelesaiObj)}\n\n`;
-  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (°C);Kelembaban Ruang Box (%);Suhu Lingkungan (°C);Kelembaban Lingkungan (%)\n";
+  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%);Tekanan Udara (hPa)\n";
 
   data24Jam.value.forEach((row, i) => {
     const suhuBme = row.suhu_bme !== "-" ? row.suhu_bme.replace(".", ",") : "-";
     const lembabBme = row.kelembaban_bme !== "-" ? row.kelembaban_bme.replace(".", ",") : "-";
     const suhuDht = row.suhu_dht !== "-" ? row.suhu_dht.replace(".", ",") : "-";
     const lembabDht = row.kelembaban_dht !== "-" ? row.kelembaban_dht.replace(".", ",") : "-";
-    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht};${lembabDht}\n`;
+    const tekanan = row.tekanan !== "-" ? row.tekanan.replace(".", ",") : "-";
+    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht};${lembabDht};${tekanan}\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

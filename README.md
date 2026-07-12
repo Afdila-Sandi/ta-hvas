@@ -185,6 +185,7 @@ cd frontend && npm install && npm run dev
 | GET    | `/api/telemetry/sampling`              | Bearer  | Daftar sesi sampling       |
 | GET    | `/api/telemetry/sampling/active-session` | Bearer | Cek sesi sampling aktif    |
 | POST   | `/api/telemetry/sampling`              | Bearer  | Buat sesi sampling baru    |
+| PUT    | `/api/telemetry/sampling/:id`          | Bearer  | Update sesi sampling       |
 | DELETE | `/api/telemetry/sampling/:id`          | Bearer  | Hapus sesi sampling        |
 | POST   | `/api/control`                         | Teknisi | Kontrol pompa/kipas        |
 

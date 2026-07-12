@@ -38,10 +38,20 @@
       </header>
 
       <main class="flex-1 overflow-y-auto p-6 space-y-6 pb-24">
-        <component :is="currentComponent" @session-created="cekSesiAktif" />
+        <component
+          :is="currentComponent"
+          v-if="hasActiveSession"
+          @session-created="cekSesiAktif"
+        />
+        <TeknisiSamplingForm
+          v-else
+          :blockedByOther="blockedByOther"
+          :otherSession="otherSession"
+          @session-created="cekSesiAktif"
+        />
       </main>
 
-      <div class="fixed bottom-0 w-full max-w-md z-50">
+      <div v-if="hasActiveSession" class="fixed bottom-0 w-full max-w-md z-50">
         <nav
           class="bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl px-6 py-3"
         >
@@ -49,9 +59,9 @@
             <li>
               <button
                 @click="activeMenu = 'kontrol'"
-                :disabled="!hasActiveSession"
+                :disabled="blockedByOther"
                 class="flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
-                :class="!hasActiveSession ? 'opacity-40 cursor-not-allowed' : ''"
+                :class="blockedByOther ? 'opacity-40 cursor-not-allowed' : ''"
               >
                 <i
                   class="fa-solid fa-sliders text-xl"
@@ -163,20 +173,27 @@ import TeknisiKontrol from "../components/TeknisiKontrol.vue";
 import TeknisiTren from "../components/TeknisiRiwayat.vue";
 import TeknisiSetelan from "../components/TeknisiSetelan.vue";
 import TeknisiLaporan from "../components/TeknisiLaporan.vue";
+import TeknisiSamplingForm from "../components/TeknisiSamplingForm.vue";
 
 const activeMenu = ref("kontrol");
 const hasActiveSession = ref(false);
+const blockedByOther = ref(false);
+const otherSession = ref(null);
 
 const cekSesiAktif = async () => {
   try {
     const res = await api.get("/telemetry/sampling/active-session");
     hasActiveSession.value = res.data.active;
+    blockedByOther.value = res.data.blocked_by_other;
+    otherSession.value = res.data.other_session;
     if (!hasActiveSession.value && activeMenu.value === "kontrol") {
       activeMenu.value = "laporan";
     }
   } catch (error) {
     console.error("Gagal mengecek sesi aktif:", error);
     hasActiveSession.value = false;
+    blockedByOther.value = false;
+    otherSession.value = null;
     if (activeMenu.value === "kontrol") {
       activeMenu.value = "laporan";
     }
@@ -184,6 +201,9 @@ const cekSesiAktif = async () => {
 };
 
 const currentComponent = computed(() => {
+  if (!hasActiveSession.value) {
+    return TeknisiSamplingForm;
+  }
   switch (activeMenu.value) {
     case "tren":
       return TeknisiTren;
@@ -192,9 +212,6 @@ const currentComponent = computed(() => {
     case "laporan":
       return TeknisiLaporan;
     default:
-      if (!hasActiveSession.value) {
-        return TeknisiLaporan;
-      }
       return TeknisiKontrol;
   }
 });

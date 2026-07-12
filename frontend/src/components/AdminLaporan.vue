@@ -172,6 +172,11 @@
               >
                 Lembab Luar (%)
               </th>
+              <th
+                class="px-4 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b text-center"
+              >
+                Tekanan (hPa)
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -198,10 +203,13 @@
               <td class="px-4 py-3 text-xs text-slate-600 text-center">
                 {{ row.kelembaban_dht }}
               </td>
+              <td class="px-4 py-3 text-xs text-slate-600 text-center">
+                {{ row.tekanan }}
+              </td>
             </tr>
             <tr v-if="data24Jam.length === 0">
               <td
-                colspan="6"
+                colspan="7"
                 class="px-6 py-12 text-center text-slate-400 text-sm"
               >
                 <i
@@ -308,6 +316,7 @@ const lihatData = async (sesi) => {
           kelembaban_bme: avg(dataDiSlot, "kelembaban_bme"),
           suhu_dht: avg(dataDiSlot, "suhu_dht"),
           kelembaban_dht: avg(dataDiSlot, "kelembaban_dht"),
+          tekanan: avg(dataDiSlot, "tekanan"),
         });
       } else {
         hitunganPerJam.push({
@@ -316,6 +325,7 @@ const lihatData = async (sesi) => {
           kelembaban_bme: "-",
           suhu_dht: "-",
           kelembaban_dht: "-",
+          tekanan: "-",
         });
       }
     }
@@ -368,14 +378,15 @@ const unduhLaporanExcel = () => {
   csv += `Tempat Sampling            ;: ${s.tempat_sampling}\n`;
   csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatDateLengkap(tglMulaiObj)} s.d ${formatDateLengkap(tglSelesaiObj)}\n\n`;
-  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%)\n";
+  csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%);Tekanan Udara (hPa)\n";
 
   data24Jam.value.forEach((row, i) => {
     const suhuBme = row.suhu_bme !== "-" ? row.suhu_bme.replace(".", ",") : "-";
     const lembabBme = row.kelembaban_bme !== "-" ? row.kelembaban_bme.replace(".", ",") : "-";
     const suhuDht = row.suhu_dht !== "-" ? row.suhu_dht.replace(".", ",") : "-";
     const lembabDht = row.kelembaban_dht !== "-" ? row.kelembaban_dht.replace(".", ",") : "-";
-    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht};${lembabDht}\n`;
+    const tekanan = row.tekanan !== "-" ? row.tekanan.replace(".", ",") : "-";
+    csv += `Jam ${i + 1};${row.labelWaktu};${suhuBme};${lembabBme};${suhuDht};${lembabDht};${tekanan}\n`;
   });
 
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
