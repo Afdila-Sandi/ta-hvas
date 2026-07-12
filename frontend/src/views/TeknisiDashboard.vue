@@ -38,20 +38,32 @@
       </header>
 
       <main class="flex-1 overflow-y-auto p-6 space-y-6 pb-24">
-        <component
-          :is="currentComponent"
-          v-if="hasActiveSession"
-          @session-created="cekSesiAktif"
-        />
         <TeknisiSamplingForm
-          v-else
+          v-if="!hasActiveSession && !blockedByOther"
           :blockedByOther="blockedByOther"
           :otherSession="otherSession"
           @session-created="cekSesiAktif"
         />
+
+        <template v-else-if="blockedByOther">
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+            <i class="fa-solid fa-user-lock text-amber-600 text-lg"></i>
+            <div>
+              <p class="text-sm font-bold text-amber-800">Sesi Sampling Aktif</p>
+              <p class="text-xs text-amber-600">{{ otherSession.nama_teknisi }} sedang sampling — {{ otherSession.perusahaan }}</p>
+            </div>
+          </div>
+          <component :is="currentComponent" />
+        </template>
+
+        <component
+          v-else
+          :is="currentComponent"
+          @session-created="cekSesiAktif"
+        />
       </main>
 
-      <div v-if="hasActiveSession" class="fixed bottom-0 w-full max-w-md z-50">
+      <div v-if="hasActiveSession || blockedByOther" class="fixed bottom-0 w-full max-w-md z-50">
         <nav
           class="bg-white/95 backdrop-blur-md border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl px-6 py-3"
         >
@@ -59,9 +71,9 @@
             <li>
               <button
                 @click="activeMenu = 'kontrol'"
-                :disabled="blockedByOther"
+                :disabled="!hasActiveSession || blockedByOther"
                 class="flex flex-col items-center gap-1 p-2 rounded-xl transition-all"
-                :class="blockedByOther ? 'opacity-40 cursor-not-allowed' : ''"
+                :class="(!hasActiveSession || blockedByOther) ? 'opacity-40 cursor-not-allowed' : ''"
               >
                 <i
                   class="fa-solid fa-sliders text-xl"
@@ -201,9 +213,6 @@ const cekSesiAktif = async () => {
 };
 
 const currentComponent = computed(() => {
-  if (!hasActiveSession.value) {
-    return TeknisiSamplingForm;
-  }
   switch (activeMenu.value) {
     case "tren":
       return TeknisiTren;
