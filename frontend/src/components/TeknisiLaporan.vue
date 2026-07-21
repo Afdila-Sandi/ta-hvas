@@ -40,6 +40,9 @@
               <p class="text-xs text-slate-500">
                 {{ sesi.parameter_uji }}
               </p>
+              <p v-if="sesi.latitude && sesi.longitude" class="text-[10px] text-slate-400">
+                GPS: {{ keDMS(sesi.latitude, "lat") }}, {{ keDMS(sesi.longitude, "lon") }}
+              </p>
               <p class="text-[10px] text-slate-400">
                 Cuaca: {{ sesi.kondisi_cuaca }} &middot; {{ formatTanggal(sesi.waktu_mulai) }}
               </p>
@@ -469,6 +472,16 @@ const formatDateTimeStr = (dateObj) => {
   );
 };
 
+const keDMS = (dd, tipe) => {
+  if (dd == null) return "-";
+  const abs = Math.abs(dd);
+  const d = Math.floor(abs);
+  const m = Math.floor((abs - d) * 60);
+  const s = ((abs - d - m / 60) * 3600).toFixed(2);
+  const label = tipe === "lat" ? (dd < 0 ? "LS" : "LU") : (dd < 0 ? "BB" : "BT");
+  return `${String(d).padStart(2, "0")}° ${String(m).padStart(2, "0")}' ${s}" ${label}`;
+};
+
 const formatTanggal = (waktu) => {
   return parseWaktuWIB(waktu).toLocaleDateString("id-ID", {
     day: "2-digit",
@@ -498,6 +511,7 @@ const unduhLaporanExcel = () => {
   csv += `Parameter Pengujian        ;: ${s.parameter_uji}\n`;
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
   csv += `Titik Sampling            ;: ${s.tempat_sampling}\n`;
+  csv += `Koordinat                  ;: ${s.latitude ? keDMS(s.latitude, "lat") + ", " + keDMS(s.longitude, "lon") : "-"}\n`;
   csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatTgl(tglMulaiObj)} s.d ${formatTgl(tglSelesaiObj)}\n\n`;
   csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%);Tekanan Udara (hPa)\n";

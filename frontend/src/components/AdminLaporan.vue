@@ -45,6 +45,11 @@
               <th
                 class="px-5 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b"
               >
+                Koordinat
+              </th>
+              <th
+                class="px-5 py-3 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase border-b"
+              >
                 Parameter
               </th>
               <th
@@ -78,6 +83,12 @@
               <td class="px-5 py-3 text-sm text-slate-600">
                 {{ sesi.tempat_sampling }}
               </td>
+              <td class="px-5 py-3 text-xs text-slate-500">
+                <span v-if="sesi.latitude && sesi.longitude">
+                  {{ keDMS(sesi.latitude, "lat") }}<br />{{ keDMS(sesi.longitude, "lon") }}
+                </span>
+                <span v-else class="text-slate-300">-</span>
+              </td>
               <td class="px-5 py-3 text-sm text-slate-500">
                 {{ sesi.parameter_uji }}
               </td>
@@ -98,7 +109,7 @@
             </tr>
             <tr v-if="sesiFiltered.length === 0">
               <td
-                colspan="6"
+                colspan="7"
                 class="px-6 py-12 text-center text-slate-400 text-sm"
               >
                 <i
@@ -127,6 +138,9 @@
             {{ sesiAktif.tempat_sampling }} &#183;
             {{ sesiAktif.parameter_uji }} &#183;
             {{ formatTanggal(sesiAktif.waktu_mulai) }}
+          </p>
+          <p v-if="sesiAktif.latitude && sesiAktif.longitude" class="text-[10px] text-slate-400 mt-0.5">
+            GPS: {{ keDMS(sesiAktif.latitude, "lat") }}, {{ keDMS(sesiAktif.longitude, "lon") }}
           </p>
         </div>
         <button
@@ -356,6 +370,16 @@ const formatDateTimeStr = (dateObj) => {
   );
 };
 
+const keDMS = (dd, tipe) => {
+  if (dd == null) return "-";
+  const abs = Math.abs(dd);
+  const d = Math.floor(abs);
+  const m = Math.floor((abs - d) * 60);
+  const s = ((abs - d - m / 60) * 3600).toFixed(2);
+  const label = tipe === "lat" ? (dd < 0 ? "LS" : "LU") : (dd < 0 ? "BB" : "BT");
+  return `${String(d).padStart(2, "0")}° ${String(m).padStart(2, "0")}' ${s}" ${label}`;
+};
+
 const formatDateLengkap = (dateObj) => {
   return dateObj.toLocaleDateString("id-ID", {
     day: "2-digit",
@@ -376,6 +400,7 @@ const unduhLaporanExcel = () => {
   csv += `Parameter Pengujian        ;: ${s.parameter_uji}\n`;
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
   csv += `Titik Sampling            ;: ${s.tempat_sampling}\n`;
+  csv += `Koordinat                  ;: ${s.latitude ? keDMS(s.latitude, "lat") + ", " + keDMS(s.longitude, "lon") : "-"}\n`;
   csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatDateLengkap(tglMulaiObj)} s.d ${formatDateLengkap(tglSelesaiObj)}\n\n`;
   csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%);Tekanan Udara (hPa)\n";
