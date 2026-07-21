@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 const Login = () => import("../views/Login.vue");
 const TeknisiDashboard = () => import("../views/TeknisiDashboard.vue");
 const AdminDashboard = () => import("../views/AdminDashboard.vue");
+const PenyeliaDashboard = () => import("../views/PenyeliaDashboard.vue");
 
 const router = createRouter({
   history: createWebHistory(),
@@ -28,6 +29,12 @@ const router = createRouter({
       component: TeknisiDashboard,
       meta: { requiresAuth: true, role: "teknisi" },
     },
+    {
+      path: "/penyeliaDashboard",
+      name: "PenyeliaDashboard",
+      component: PenyeliaDashboard,
+      meta: { requiresAuth: true, role: "penyelia" },
+    },
   ],
 });
 
@@ -49,6 +56,7 @@ router.beforeEach((to, from, next) => {
       if (to.meta.role && to.meta.role !== userRole) {
         if (userRole === "teknisi") return next("/teknisiDashboard");
         if (userRole === "admin") return next("/adminDashboard");
+        if (userRole === "penyelia") return next("/penyeliaDashboard");
       }
     } catch (error) {
       localStorage.removeItem("hvas_access_token");
@@ -62,9 +70,9 @@ router.beforeEach((to, from, next) => {
       const payloadBase64 = token.split(".")[1];
       const decodedJson = atob(payloadBase64);
       const userData = JSON.parse(decodedJson);
-      return next(
-        userData.role === "admin" ? "/adminDashboard" : "/teknisiDashboard",
-      );
+      if (userData.role === "admin") return next("/adminDashboard");
+      if (userData.role === "penyelia") return next("/penyeliaDashboard");
+      return next("/teknisiDashboard");
     } catch (e) {
       // token invalid, biarkan ke login
     }

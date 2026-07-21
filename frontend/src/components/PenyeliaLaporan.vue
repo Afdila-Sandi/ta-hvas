@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-6 pb-6">
     <header>
       <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">
@@ -20,7 +20,7 @@
               <input
                 v-model="cari"
                 type="text"
-                placeholder="Cari nama teknisi, perusahaan, tempat..."
+                placeholder="Cari nama teknisi, perusahaan, titik..."
                 class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50"
               />
             </div>
@@ -233,8 +233,6 @@ const daftarSesi = ref([]);
 const sesiAktif = ref(null);
 const data24Jam = ref([]);
 const cari = ref("");
-const filterDari = ref("");
-const filterSampai = ref("");
 
 const parseWaktuWIB = (waktuStr) => {
   return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
@@ -252,16 +250,6 @@ const sesiFiltered = computed(() => {
         s.tempat_sampling.toLowerCase().includes(q) ||
         s.parameter_uji.toLowerCase().includes(q),
     );
-  }
-
-  if (filterDari.value) {
-    const dari = new Date(filterDari.value).getTime();
-    hasil = hasil.filter((s) => parseWaktuWIB(s.waktu_mulai).getTime() >= dari);
-  }
-
-  if (filterSampai.value) {
-    const sampai = new Date(filterSampai.value).getTime() + 86400000;
-    hasil = hasil.filter((s) => parseWaktuWIB(s.waktu_mulai).getTime() <= sampai);
   }
 
   return hasil;
@@ -375,7 +363,7 @@ const unduhLaporanExcel = () => {
   csv += `Nama Perusahaan / Instansi ;: ${s.perusahaan.toUpperCase()}\n`;
   csv += `Parameter Pengujian        ;: ${s.parameter_uji}\n`;
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
-  csv += `Titik Sampling            ;: ${s.tempat_sampling}\n`;
+  csv += `Titik Sampling             ;: ${s.tempat_sampling}\n`;
   csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatDateLengkap(tglMulaiObj)} s.d ${formatDateLengkap(tglSelesaiObj)}\n\n`;
   csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%);Tekanan Udara (hPa)\n";

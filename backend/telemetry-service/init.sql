@@ -20,5 +20,7 @@ CREATE TABLE IF NOT EXISTS sampling (
     kondisi_cuaca VARCHAR(100) NOT NULL,
     waktu_mulai TIMESTAMP NOT NULL,
     waktu_selesai TIMESTAMP,
+    latitude NUMERIC(9,6),
+    longitude NUMERIC(9,6),
     dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

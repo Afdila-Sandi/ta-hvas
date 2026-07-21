@@ -72,7 +72,7 @@
 
         <div>
           <label class="block text-xs font-bold text-slate-500 mb-1"
-            >Tempat Sampling</label
+            >Titik Sampling</label
           >
           <input
             v-model="form.tempat_sampling"
@@ -158,6 +158,11 @@
           </div>
         </div>
 
+        <div v-if="lokasiStatus" class="flex items-center gap-2 text-xs text-slate-500">
+          <i class="fa-solid fa-location-dot" :class="form.latitude ? 'text-emerald-500' : 'text-amber-500'"></i>
+          <span>{{ lokasiStatus }}</span>
+        </div>
+
         <button
           type="submit"
           :disabled="sedangMembuat"
@@ -175,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import api from "../services/api";
 
 const props = defineProps({
@@ -186,6 +191,7 @@ const props = defineProps({
 const emit = defineEmits(["session-created"]);
 
 const sedangMembuat = ref(false);
+const lokasiStatus = ref("");
 
 const form = reactive({
   tempat_sampling: "",
@@ -195,6 +201,8 @@ const form = reactive({
   jam_mulai: "",
   kondisi_cuaca: "",
   kondisi_cuaca_custom: "",
+  latitude: null,
+  longitude: null,
 });
 
 const parseWaktuWIB = (waktuStr) => {
@@ -211,6 +219,39 @@ const formatTanggal = (waktu) => {
   });
 };
 
+const inisialisasiWaktu = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  form.tanggal_mulai = `${year}-${month}-${day}`;
+
+  const currentHour = now.getHours();
+  form.jam_mulai = String(currentHour).padStart(2, "0") + ":00";
+};
+
+const ambilLokasi = () => {
+  if (!navigator.geolocation) {
+    lokasiStatus.value = "Geolocation tidak didukung browser";
+    return;
+  }
+
+  lokasiStatus.value = "Mengambil lokasi...";
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      form.latitude = pos.coords.latitude;
+      form.longitude = pos.coords.longitude;
+      lokasiStatus.value = `Lokasi terdeteksi (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+    },
+    (err) => {
+      lokasiStatus.value = "Lokasi tidak tersedia, input manual koordinat jika diperlukan";
+      console.warn("Geolocation error:", err.message);
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+};
+
 const buatSesiSampling = async () => {
   sedangMembuat.value = true;
   try {
@@ -224,6 +265,8 @@ const buatSesiSampling = async () => {
       perusahaan: form.perusahaan,
       waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00`,
       kondisi_cuaca: kondisiCuacaAkhir,
+      latitude: form.latitude,
+      longitude: form.longitude,
     };
     await api.post("/telemetry/sampling", payload);
     emit("session-created");
@@ -233,4 +276,9 @@ const buatSesiSampling = async () => {
     sedangMembuat.value = false;
   }
 };
+
+onMounted(() => {
+  inisialisasiWaktu();
+  ambilLokasi();
+});
 </script>

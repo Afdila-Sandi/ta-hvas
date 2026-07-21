@@ -35,3 +35,23 @@ exports.isAdmin = (req, res, next) => {
   }
   next(); 
 };
+
+exports.isPenyelia = (req, res, next) => {
+  if (req.user.role !== "penyelia") {
+    return res.status(403).json({ 
+      success: false, 
+      message: "Akses Terlarang! Hanya Penyelia yang diizinkan." 
+    });
+  }
+  next(); 
+};
+
+exports.isAdminOrPenyelia = (req, res, next) => {
+  if (req.user.role !== "admin" && req.user.role !== "penyelia") {
+    return res.status(403).json({ 
+      success: false, 
+      message: "Akses Terlarang! Hanya Admin atau Penyelia yang diizinkan." 
+    });
+  }
+  next(); 
+};

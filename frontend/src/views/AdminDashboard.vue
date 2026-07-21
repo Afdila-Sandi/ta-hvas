@@ -11,7 +11,28 @@
     />
 
     <main class="flex-1 overflow-y-auto p-8 lg:p-12 relative">
-      <AdminStatistik v-if="currentMenu === 'dashboard'" />
+      <div v-if="currentMenu === 'dashboard'" class="space-y-6">
+        <div v-if="sesiAktif.length > 0" class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <i class="fa-solid fa-user-check text-amber-600"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-amber-800">Sesi Sampling Aktif</p>
+              <p class="text-xs text-amber-600">{{ sesiAktif.length }} teknisi sedang melakukan sampling</p>
+            </div>
+          </div>
+          <div class="space-y-2 mt-3">
+            <div v-for="sesi in sesiAktif" :key="sesi.id" class="bg-white rounded-xl p-3 border border-amber-100">
+              <p class="text-sm font-bold text-slate-800">{{ sesi.nama_teknisi }} — {{ sesi.perusahaan }}</p>
+              <p class="text-xs text-slate-500">{{ sesi.tempat_sampling }} · {{ sesi.parameter_uji }}</p>
+              <p class="text-[10px] text-slate-400">{{ formatTanggal(sesi.waktu_mulai) }} · Cuaca: {{ sesi.kondisi_cuaca }}</p>
+            </div>
+          </div>
+        </div>
+
+        <AdminStatistik v-if="currentMenu === 'dashboard'" />
+      </div>
 
       <AdminLaporan v-if="currentMenu === 'laporan'" />
 
@@ -134,6 +155,21 @@ const selectedUser = ref(null);
 const adminName = ref("Memuat...");
 const adminRole = ref("Admin");
 const daftarTeknisi = ref([]);
+const sesiAktif = ref([]);
+
+const parseWaktuWIB = (waktuStr) => {
+  return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
+};
+
+const formatTanggal = (waktu) => {
+  return parseWaktuWIB(waktu).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 const fetchData = async () => {
   try {
@@ -141,8 +177,11 @@ const fetchData = async () => {
     adminName.value = profileRes.data.nama;
     adminRole.value = profileRes.data.peran;
 
-    const usersRes = await api.get("/auth/users?role=teknisi");
+    const usersRes = await api.get("/auth/users");
     daftarTeknisi.value = usersRes.data;
+
+    const sesiRes = await api.get("/telemetry/sampling/all-active");
+    sesiAktif.value = sesiRes.data.sessions || [];
   } catch (error) {
     console.error("Gagal mengambil data:", error);
     if (error.response?.status === 401) prosesLogoutAdmin();

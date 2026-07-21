@@ -8,7 +8,7 @@ exports.getSamplingSessions = async (req, res) => {
     let dbQuery;
     let queryParams = [];
 
-    if (req.user.role === "admin") {
+    if (req.user.role === "admin" || req.user.role === "penyelia") {
       dbQuery = "SELECT * FROM sampling ORDER BY dibuat_pada DESC";
     } else {
       dbQuery = "SELECT * FROM sampling WHERE teknisi_id = $1 ORDER BY dibuat_pada DESC";
@@ -28,7 +28,7 @@ exports.getSamplingSessions = async (req, res) => {
 exports.createSamplingSession = async (req, res) => {
   let client;
   try {
-    const { tempat_sampling, parameter_uji, perusahaan, waktu_mulai, kondisi_cuaca } = req.body;
+    const { tempat_sampling, parameter_uji, perusahaan, waktu_mulai, kondisi_cuaca, latitude, longitude } = req.body;
 
     if (!tempat_sampling || !parameter_uji || !perusahaan || !waktu_mulai || !kondisi_cuaca) {
       return res.status(400).json({ success: false, message: "Semua field wajib diisi" });
@@ -54,8 +54,8 @@ exports.createSamplingSession = async (req, res) => {
     }
 
     const dbQuery = `
-      INSERT INTO sampling (teknisi_id, nama_teknisi, tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO sampling (teknisi_id, nama_teknisi, tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai, latitude, longitude)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
     const result = await client.query(dbQuery, [
@@ -66,6 +66,8 @@ exports.createSamplingSession = async (req, res) => {
       perusahaan,
       kondisi_cuaca,
       waktu_mulai,
+      latitude || null,
+      longitude || null,
     ]);
 
     res.status(201).json({ success: true, data: result.rows[0] });
@@ -107,7 +109,7 @@ exports.updateSamplingSession = async (req, res) => {
   let client;
   try {
     const { id } = req.params;
-    const { tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai } = req.body;
+    const { tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai, latitude, longitude } = req.body;
 
     if (!tempat_sampling || !parameter_uji || !perusahaan || !kondisi_cuaca || !waktu_mulai) {
       return res.status(400).json({ success: false, message: "Semua field wajib diisi" });
@@ -127,18 +129,18 @@ exports.updateSamplingSession = async (req, res) => {
     let dbQuery;
     let queryParams;
 
-    if (req.user.role === "admin") {
+    if (req.user.role === "admin" || req.user.role === "penyelia") {
       dbQuery = `
-        UPDATE sampling SET tempat_sampling = $1, parameter_uji = $2, perusahaan = $3, kondisi_cuaca = $4, waktu_mulai = $5
-        WHERE id = $6 RETURNING *
+        UPDATE sampling SET tempat_sampling = $1, parameter_uji = $2, perusahaan = $3, kondisi_cuaca = $4, waktu_mulai = $5, latitude = $6, longitude = $7
+        WHERE id = $8 RETURNING *
       `;
-      queryParams = [tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai, id];
+      queryParams = [tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai, latitude || null, longitude || null, id];
     } else {
       dbQuery = `
-        UPDATE sampling SET tempat_sampling = $1, parameter_uji = $2, perusahaan = $3, kondisi_cuaca = $4, waktu_mulai = $5
-        WHERE id = $6 AND teknisi_id = $7 RETURNING *
+        UPDATE sampling SET tempat_sampling = $1, parameter_uji = $2, perusahaan = $3, kondisi_cuaca = $4, waktu_mulai = $5, latitude = $6, longitude = $7
+        WHERE id = $8 AND teknisi_id = $9 RETURNING *
       `;
-      queryParams = [tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai, id, req.user.id];
+      queryParams = [tempat_sampling, parameter_uji, perusahaan, kondisi_cuaca, waktu_mulai, latitude || null, longitude || null, id, req.user.id];
     }
 
     const result = await client.query(dbQuery, queryParams);
@@ -183,6 +185,25 @@ exports.deleteSamplingSession = async (req, res) => {
     res.status(200).json({ success: true, message: "Sesi sampling berhasil dihapus" });
   } catch (error) {
     console.error("Gagal menghapus sesi sampling:", error.message);
+    res.status(500).json({ success: false, message: "Terjadi kesalahan" });
+  } finally {
+    if (client) client.release();
+  }
+};
+
+exports.getAllActiveSessions = async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query(
+      `SELECT * FROM sampling WHERE waktu_mulai + INTERVAL '24 hours' > NOW() ORDER BY waktu_mulai DESC`
+    );
+    return res.status(200).json({
+      active: result.rows.length > 0,
+      sessions: result.rows,
+    });
+  } catch (error) {
+    console.error("Gagal mengambil sesi aktif:", error.message);
     res.status(500).json({ success: false, message: "Terjadi kesalahan" });
   } finally {
     if (client) client.release();

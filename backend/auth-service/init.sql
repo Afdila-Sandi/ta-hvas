@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     nama VARCHAR(100) NOT NULL,
-    peran VARCHAR(50) CHECK (peran IN ('teknisi', 'admin')) NOT NULL,
+    peran VARCHAR(50) CHECK (peran IN ('teknisi', 'admin', 'penyelia')) NOT NULL,
     dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     refresh_token TEXT DEFAULT NULL
 );

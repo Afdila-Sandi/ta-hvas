@@ -15,9 +15,9 @@
           AirLab
         </h2>
         <p
-          class="text-[10px] text-emerald-600 uppercase font-bold tracking-wider"
+          class="text-[10px] text-amber-600 uppercase font-bold tracking-wider"
         >
-          Admin Panel
+          Penyelia Panel
         </p>
       </div>
     </div>
@@ -30,7 +30,7 @@
         class="group w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300"
         :class="
           activeMenu === menu.id
-            ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+            ? 'bg-amber-50 text-amber-700 shadow-sm'
             : 'bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'
         "
       >
@@ -38,7 +38,7 @@
           :class="[
             menu.icon,
             activeMenu === menu.id
-              ? 'text-emerald-600'
+              ? 'text-amber-600'
               : 'text-slate-400 group-hover:text-slate-500',
           ]"
           class="text-lg w-6 text-center transition-colors"
@@ -55,9 +55,9 @@
         @click="$emit('changeMenu', 'profil')"
       >
         <div
-          class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-emerald-700 font-black border border-slate-200 shadow-sm uppercase shrink-0"
+          class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-amber-700 font-black border border-slate-200 shadow-sm uppercase shrink-0"
         >
-          {{ (userName || "AD").substring(0, 2) }}
+          {{ (userName || "PV").substring(0, 2) }}
         </div>
         <div class="overflow-hidden">
           <p class="text-sm font-bold text-slate-800 capitalize truncate">
@@ -66,7 +66,7 @@
           <p
             class="text-[10px] uppercase tracking-wider text-slate-500 font-bold truncate"
           >
-            {{ userRole || "ADMIN" }}
+            {{ userRole || "PENYELIA" }}
           </p>
         </div>
       </div>
@@ -92,7 +92,7 @@ const emit = defineEmits(["changeMenu", "logout"]);
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: "fa-solid fa-chart-line" },
-  { id: "user", label: "Data Teknisi", icon: "fa-solid fa-users-gear" },
+  { id: "user", label: "Data Teknisi", icon: "fa-solid fa-users" },
   { id: "laporan", label: "Laporan Sampling", icon: "fa-solid fa-file-contract" },
 ];
 </script>

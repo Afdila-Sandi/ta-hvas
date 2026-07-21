@@ -184,10 +184,10 @@ exports.register = async (req, res) => {
     });
   }
 
-  if (!["teknisi", "admin"].includes(peran)) {
+  if (!["teknisi", "admin", "penyelia"].includes(peran)) {
     return res.status(400).json({
       success: false,
-      message: "Peran harus 'teknisi' atau 'admin'",
+      message: "Peran harus 'teknisi', 'admin', atau 'penyelia'",
     });
   }
 
@@ -256,7 +256,7 @@ exports.getUsers = async (req, res) => {
     let queryParams = [];
 
     if (role) {
-      if (!["teknisi", "admin"].includes(role)) {
+      if (!["teknisi", "admin", "penyelia"].includes(role)) {
         return res.status(400).json({
           success: false,
           message: "Role tidak valid",
@@ -296,10 +296,10 @@ exports.updateUser = async (req, res) => {
     });
   }
 
-  if (peran && !["teknisi", "admin"].includes(peran)) {
+  if (peran && !["teknisi", "admin", "penyelia"].includes(peran)) {
     return res
       .status(400)
-      .json({ success: false, message: "Peran harus 'teknisi' atau 'admin'" });
+      .json({ success: false, message: "Peran harus 'teknisi', 'admin', atau 'penyelia'" });
   }
 
   if (password && password.trim() !== "" && password.length < 6) {

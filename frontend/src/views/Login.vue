@@ -106,6 +106,8 @@ const handleLogin = async () => {
 
     if (userRole === "admin") {
       router.push("/adminDashboard");
+    } else if (userRole === "penyelia") {
+      router.push("/penyeliaDashboard");
     } else if (userRole === "teknisi") {
       router.push("/teknisiDashboard");
     } else {

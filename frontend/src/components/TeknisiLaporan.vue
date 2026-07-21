@@ -206,7 +206,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-500 mb-1">Tempat Sampling</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">Titik Sampling</label>
             <input
               v-model="editForm.tempat_sampling"
               type="text"
@@ -497,7 +497,7 @@ const unduhLaporanExcel = () => {
   csv += `Nama Perusahaan / Instansi ;: ${s.perusahaan.toUpperCase()}\n`;
   csv += `Parameter Pengujian        ;: ${s.parameter_uji}\n`;
   csv += `Petugas Teknisi / Sampler  ;: ${s.nama_teknisi}\n`;
-  csv += `Tempat Sampling            ;: ${s.tempat_sampling}\n`;
+  csv += `Titik Sampling            ;: ${s.tempat_sampling}\n`;
   csv += `Kondisi Cuaca              ;: ${s.kondisi_cuaca || "-"}\n`;
   csv += `Tanggal Pengambilan        ;: ${formatTgl(tglMulaiObj)} s.d ${formatTgl(tglSelesaiObj)}\n\n`;
   csv += "Jam Ke-;Waktu Pengambilan;Suhu Ruang Box (C);Kelembaban Ruang Box (%);Suhu Lingkungan (C);Kelembaban Lingkungan (%);Tekanan Udara (hPa)\n";
