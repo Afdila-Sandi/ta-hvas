@@ -53,7 +53,6 @@
           <select v-model="form.peran" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all bg-white">
             <option value="teknisi">Teknisi</option>
             <option value="penyelia">Penyelia</option>
-            <option value="admin">Admin</option>
           </select>
         </div>
 

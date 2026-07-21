@@ -178,7 +178,7 @@ const fetchData = async () => {
     adminRole.value = profileRes.data.peran;
 
     const usersRes = await api.get("/auth/users");
-    daftarTeknisi.value = usersRes.data;
+    daftarTeknisi.value = usersRes.data.filter(u => u.peran !== 'admin');
 
     const sesiRes = await api.get("/telemetry/sampling/all-active");
     sesiAktif.value = sesiRes.data.sessions || [];
