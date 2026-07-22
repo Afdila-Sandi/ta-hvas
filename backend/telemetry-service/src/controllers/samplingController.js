@@ -38,7 +38,7 @@ exports.createSamplingSession = async (req, res) => {
       return res.status(400).json({ success: false, message: "Input melebihi batas panjang yang diizinkan" });
     }
 
-    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\+07:00)?$/;
     if (!dateRegex.test(waktu_mulai)) {
       return res.status(400).json({ success: false, message: "Format waktu_mulai tidak valid (ISO 8601)" });
     }
@@ -119,7 +119,7 @@ exports.updateSamplingSession = async (req, res) => {
       return res.status(400).json({ success: false, message: "Input melebihi batas panjang yang diizinkan" });
     }
 
-    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\+07:00)?$/;
     if (!dateRegex.test(waktu_mulai)) {
       return res.status(400).json({ success: false, message: "Format waktu_mulai tidak valid (ISO 8601)" });
     }

@@ -206,7 +206,9 @@ const form = reactive({
 });
 
 const parseWaktuWIB = (waktuStr) => {
-  return new Date(waktuStr.replace(/Z$/, "").replace(/\+00:00$/, "") + "+07:00");
+  if (!waktuStr) return new Date();
+  if (waktuStr.includes("+") ||waktuStr.includes("Z")) return new Date(waktuStr);
+  return new Date(waktuStr + "+07:00");
 };
 
 const formatTanggal = (waktu) => {
@@ -217,6 +219,16 @@ const formatTanggal = (waktu) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+const keDMS = (dd, tipe) => {
+  if (dd == null) return "-";
+  const abs = Math.abs(dd);
+  const d = Math.floor(abs);
+  const m = Math.floor((abs - d) * 60);
+  const s = ((abs - d - m / 60) * 3600).toFixed(2);
+  const label = tipe === "lat" ? (dd < 0 ? "LS" : "LU") : (dd < 0 ? "BB" : "BT");
+  return `${String(d).padStart(2, "0")}\u00B0 ${String(m).padStart(2, "0")}' ${s}" ${label}`;
 };
 
 const inisialisasiWaktu = () => {
@@ -242,7 +254,7 @@ const ambilLokasi = () => {
     (pos) => {
       form.latitude = pos.coords.latitude;
       form.longitude = pos.coords.longitude;
-      lokasiStatus.value = `Lokasi terdeteksi (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+      lokasiStatus.value = `Lokasi terdeteksi: ${keDMS(pos.coords.latitude, 'lat')}, ${keDMS(pos.coords.longitude, 'lon')}`;
     },
     (err) => {
       lokasiStatus.value = "Lokasi tidak tersedia, input manual koordinat jika diperlukan";
@@ -263,7 +275,7 @@ const buatSesiSampling = async () => {
       tempat_sampling: form.tempat_sampling,
       parameter_uji: form.parameter_uji,
       perusahaan: form.perusahaan,
-      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00`,
+      waktu_mulai: `${form.tanggal_mulai}T${form.jam_mulai}:00+07:00`,
       kondisi_cuaca: kondisiCuacaAkhir,
       latitude: form.latitude,
       longitude: form.longitude,
